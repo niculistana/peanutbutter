@@ -1,0 +1,8 @@
+{
+  "userId": 1,
+  "username": "fbar",
+  "password": "s3curePassword!",
+  "email": "random_dude@example.com",
+  "firstName": "Foo",
+  "lastName": "Bar"
+}
