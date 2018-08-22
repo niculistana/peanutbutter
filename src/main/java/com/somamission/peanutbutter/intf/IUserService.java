@@ -16,10 +16,14 @@ public interface IUserService extends UserDetailsService {
     public User getUserByUsername(@JsonRpcParam(value = "username") String username) throws JsonProcessingException, UserNotFoundException;
 
     public void createNewUser(@JsonRpcParam(value = "email") String email,
-                                  @JsonRpcParam(value = "username") String username,
-                                  @JsonRpcParam(value = "password") String password) throws BadRequestException;
+                              @JsonRpcParam(value = "username") String username,
+                              @JsonRpcParam(value = "password") String password) throws BadRequestException;
 
-    public void updatePassword(String password, String username) throws BadRequestException, JsonProcessingException, UserNotFoundException;
+    public void updatePassword(@JsonRpcParam(value = "password") String password,
+                               @JsonRpcParam(value = "username") String username) throws BadRequestException, JsonProcessingException, UserNotFoundException;
 
-    public void resetPassword(String username) throws UserNotFoundException, BadRequestException, JsonProcessingException;
+    public void resetPassword(@JsonRpcParam(value = "username") String username) throws UserNotFoundException, BadRequestException, JsonProcessingException;
+
+    public void updateEmail(@JsonRpcParam(value = "email") String email,
+                            @JsonRpcParam(value = "username") String username) throws BadRequestException, JsonProcessingException, UserNotFoundException;
 }

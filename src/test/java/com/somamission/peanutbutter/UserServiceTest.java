@@ -74,9 +74,23 @@ public class UserServiceTest {
         userService.createNewUser(email, username, password);
         userService.resetPassword(username);
         User updatedUser = userService.getUserByUsername(username);
-        // remove @JsonIgnore in password field in the User class
-        String decodedPassword = updatedUser.getPassword();
-        assertThat(password.equals(decodedPassword)).isFalse();
+        assertThat(passwordEncoder.matches(updatedUser.getPassword(), password)).isFalse();
+    }
+
+    @Test
+    public void should_update_email() throws FileNotFoundException, JSONException, BadRequestException, JsonProcessingException, UserNotFoundException {
+        String newUserParams = TestUtils.getFileToJson("json/happy/new_user.json");
+        JSONObject newUserParamsJson = new JSONObject(newUserParams);
+        String email = newUserParamsJson.optString("email");
+        String username = newUserParamsJson.optString("username");
+        String password = newUserParamsJson.optString("password");
+        userService.createNewUser(email, username, password);
+        String updateUserParams = TestUtils.getFileToJson("json/happy/existing_user.json");
+        JSONObject updateUserParamsJson = new JSONObject(updateUserParams);
+        String updateEmail = updateUserParamsJson.optString("email");
+        userService.updateEmail(updateEmail, username);
+        User updatedUser = userService.getUserByUsername(username);
+        assertThat(updateEmail.equals(updatedUser.getEmail())).isTrue();
     }
 
 //    @Test
