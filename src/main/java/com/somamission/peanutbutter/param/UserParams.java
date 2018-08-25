@@ -26,8 +26,11 @@ public class UserParams {
         }
     }
 
-    private String email;
-    private String password;
+    private transient String email;
+    private transient String password;
+    private String username;
+    private String firstName;
+    private String lastName;
 
     private UserParams() {
 
@@ -37,15 +40,19 @@ public class UserParams {
         return email;
     }
 
-    public void setEmail(String email) {
-        this.email = email;
-    }
-
     public String getPassword() {
         return password;
     }
 
-    public void setPassword(String password) {
-        this.password = password;
+    public String getUsername() {
+        return username;
+    }
+
+    public String getFirstName() {
+        return firstName;
+    }
+
+    public String getLastName() {
+        return lastName;
     }
 }

@@ -1,8 +1,5 @@
 package com.somamission.peanutbutter.domain;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonProperty;
-
 import javax.persistence.*;
 import java.io.Serializable;
 
@@ -14,20 +11,21 @@ public class User implements Serializable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
-    @Column(name="user_id")
+    @Column(name = "user_id")
     private Long userId;
     @Column(length = 60, nullable = false, unique = true)
     private String username;
     @Column(nullable = false, unique = true)
     private String email;
     @Column(nullable = false)
-    private String password;
-    @Column(length = 60, name="first_name")
+    private transient String password;
+    @Column(length = 60, name = "first_name")
     private String firstName;
-    @Column(length = 60, name="last_name")
+    @Column(length = 60, name = "last_name")
     private String lastName;
 
-    public User() {}
+    public User() {
+    }
 
     public String getUsername() {
         return username;
@@ -61,12 +59,10 @@ public class User implements Serializable {
         this.email = email;
     }
 
-    @JsonIgnore
     public String getPassword() {
         return password;
     }
 
-    @JsonProperty
     public void setPassword(String password) {
         this.password = password;
     }

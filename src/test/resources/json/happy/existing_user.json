@@ -2,5 +2,7 @@
   "userId": 1,
   "username": "fbar",
   "password": "n3wPassword!",
-  "email": "foo_bar2@gmail.com"
+  "email": "foo_bar2@gmail.com",
+  "firstName": "Foo",
+  "lastName": "Bar"
 }

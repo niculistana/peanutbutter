@@ -1,14 +1,13 @@
 package com.somamission.peanutbutter.impl;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.gson.Gson;
 import com.googlecode.jsonrpc4j.spring.AutoJsonRpcServiceImpl;
-import com.somamission.peanutbutter.domain.User;
-import com.somamission.peanutbutter.intf.IUserService;
 import com.somamission.peanutbutter.constants.ErrorMessageContants;
+import com.somamission.peanutbutter.domain.User;
 import com.somamission.peanutbutter.exception.BadRequestException;
 import com.somamission.peanutbutter.exception.ObjectNotFoundException;
 import com.somamission.peanutbutter.exception.UserNotFoundException;
+import com.somamission.peanutbutter.intf.IUserService;
 import com.somamission.peanutbutter.param.UserParams;
 import com.somamission.peanutbutter.repository.IUserRepository;
 import org.apache.commons.lang3.StringUtils;
@@ -24,7 +23,7 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 
@@ -37,18 +36,18 @@ public class UserService implements IUserService {
     IUserRepository userRepository;
 
     @Autowired
-    ObjectMapper objectMapper;
-
-    @Autowired
     PasswordEncoder passwordEncoder;
 
     @Autowired
     RedissonClient redissonClient;
 
     @Override
-    public User getUserByUsername(String username) throws JsonProcessingException, UserNotFoundException {
+    public User getUserByUsername(String username) throws UserNotFoundException {
         logger.info("Getting user by username");
         try {
+            if (StringUtils.isEmpty(username)) {
+                throw new ObjectNotFoundException();
+            }
             RBucket<User> bucket = redissonClient.getBucket(username);
             User user = bucket.get();
             if (user != null) {
@@ -93,6 +92,12 @@ public class UserService implements IUserService {
             throw new BadRequestException(emailNotValidMessage);
         }
 
+        if (!isUsernameValid(username)) {
+            String usernameNotValidMessage = username + " username is invalid. Requirements: " + ErrorMessageContants.USERNAME_FORMAT_REQUIREMENTS;
+            logger.info(usernameNotValidMessage);
+            throw new BadRequestException(usernameNotValidMessage);
+        }
+
         if (!isPasswordValid(password)) {
             String passwordIsNotSecureEnoughMessage = "password is invalid. Requirements: " + ErrorMessageContants.PASSWORD_FORMAT_REQUIREMENTS;
             logger.info(passwordIsNotSecureEnoughMessage);
@@ -109,7 +114,7 @@ public class UserService implements IUserService {
     }
 
     @Override
-    public void updatePassword(String password, String username) throws BadRequestException, JsonProcessingException, UserNotFoundException {
+    public void updatePassword(String password, String username) throws BadRequestException, UserNotFoundException {
         logger.info("Updating user password");
         if (StringUtils.isEmpty(username)) {
             logger.info(ErrorMessageContants.REQUIRED_PARAMETER_NOT_FOUND + ": username");
@@ -128,13 +133,13 @@ public class UserService implements IUserService {
     }
 
     @Override
-    public void resetPassword(String username) throws UserNotFoundException, BadRequestException, JsonProcessingException {
+    public void resetPassword(String username) throws UserNotFoundException, BadRequestException {
         logger.info("Resetting user password");
         updatePassword(generatePassword(), username);
     }
 
     @Override
-    public void updateEmail(String email, String username) throws BadRequestException, JsonProcessingException, UserNotFoundException {
+    public void updateEmail(String email, String username) throws BadRequestException, UserNotFoundException {
         logger.info("Updating user email");
         if (StringUtils.isEmpty(username)) {
             logger.info(ErrorMessageContants.REQUIRED_PARAMETER_NOT_FOUND + ": username");
@@ -152,6 +157,15 @@ public class UserService implements IUserService {
         updateUser(user, userParams);
     }
 
+    @Override
+    public void updateUserInfo(String userParamString) throws UserNotFoundException {
+        logger.info("Updating user info");
+        Gson gson = new Gson();
+        UserParams userParams = gson.fromJson(userParamString, UserParams.class);
+        User user = getUserByUsername(userParams.getUsername());
+        updateUser(user, userParams);
+    }
+
     private void updateUser(User user, UserParams userParams) {
         if (!StringUtils.isEmpty(userParams.getEmail())) {
             user.setEmail(userParams.getEmail());
@@ -161,77 +175,22 @@ public class UserService implements IUserService {
             user.setPassword(passwordEncoder.encode(userParams.getPassword()));
         }
 
+        if (!StringUtils.isEmpty(userParams.getFirstName())) {
+            user.setFirstName(userParams.getFirstName());
+        }
+
+        if (!StringUtils.isEmpty(userParams.getLastName())) {
+            user.setLastName(userParams.getLastName());
+        }
+
         userRepository.save(user);
         RBucket<User> bucket = redissonClient.getBucket(user.getUsername());
         bucket.set(user);
     }
 
-    // FIXME: remove once all update methods are implemented
-//        private void updateUser(String requestParams) throws BadRequestException, UserNotFoundException {
-//        logger.info("Updating existing user");
-//        if (StringUtils.isEmpty(requestParams)) {
-//            logger.info(ErrorMessageContants.EMPTY_PARAMETER_MESSAGE);
-//            throw new BadRequestException(ErrorMessageContants.EMPTY_PARAMETER_MESSAGE);
-//        }
-//        JSONObject userJson = new JSONObject(requestParams);
-//        long userId = userJson.optLong("userId");
-//        User user = null;
-//        try {
-//            // use findUserById because you want to get most recent and non-cached data
-//            user = findUserById(userId);
-//        } catch (ObjectNotFoundException e) {
-//            String notFoundMessage = "Cannot update user with user id, reason: user id " + userId + " not found";
-//            logger.info(notFoundMessage);
-//            throw new UserNotFoundException(notFoundMessage);
-//        }
-//
-//        String email = userJson.optString("email");
-//        String username = userJson.optString("username");
-//        String password = userJson.optString("password");
-//        String firstName = userJson.optString("firstName");
-//        String lastName = userJson.optString("lastName");
-//
-//
-//        if (!StringUtils.isEmpty(email) && !email.equals(user.getEmail())) {
-//            updateEmail(user, email);
-//        }
-//
-//        if (!StringUtils.isEmpty(username) && !username.equals(user.getUsername())) {
-//            updateUsername(user, username);
-//        }
-//
-//        // password history checking is in updatePassword method
-//        if (!StringUtils.isEmpty(password)) {
-//            updatePassword(user, password);
-//        }
-//
-//        if (!StringUtils.isEmpty(firstName) && !firstName.equals(user.getFirstName())) {
-//            user.setFirstName(firstName);
-//        }
-//
-//        if (!StringUtils.isEmpty(lastName) && !lastName.equals(user.getLastName())) {
-//            user.setLastName(lastName);
-//        }
-//
-//        userRepository.save(user);
-//        RBucket<User> bucket = redissonClient.getBucket(username);
-//        bucket.set(user);
-//    }
-
     private User findUserById(Long userId) throws ObjectNotFoundException {
         return userRepository.findById(userId).orElseThrow(ObjectNotFoundException::new);
     }
-
-    // FIXME: remove once updateUsername is implemented
-//    private void updateUsername(User user, String username) throws BadRequestException {
-//        boolean isUsernameValid = isUsernameValid(username);
-//        if (!isUsernameValid) {
-//            String usernameAlreadyExistsMessage = "username: " + username + " is invalid. Requirements: " + ErrorMessageContants.USERNAME_FORMAT_REQUIREMENTS;
-//            logger.info(usernameAlreadyExistsMessage);
-//            throw new BadRequestException(usernameAlreadyExistsMessage);
-//        }
-//        user.setUsername(username);
-//    }
 
     private boolean isEmailValid(String email) {
         // TODO: check if email is unique
@@ -242,12 +201,13 @@ public class UserService implements IUserService {
         // TODO: implement this
         boolean isUsernameUnique = true;
         boolean usernameHasEnoughCharacters = true;
+        boolean isUsernameIsNotAbusive = true;
         return isUsernameUnique && usernameHasEnoughCharacters;
     }
 
     private boolean isPasswordValid(String password) {
         PasswordValidator validator = new PasswordValidator(
-                new LengthRule(8, 16),
+                new LengthRule(8, 128),
                 new CharacterRule(EnglishCharacterData.UpperCase, 1),
                 new CharacterRule(EnglishCharacterData.LowerCase, 1),
                 new CharacterRule(EnglishCharacterData.Digit, 1),
