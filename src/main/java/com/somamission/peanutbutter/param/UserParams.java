@@ -4,6 +4,8 @@ public class UserParams {
     public static class Builder {
         private String email;
         private String password;
+        private NameParams nameParams;
+        private AddressParams addressParams;
 
         public Builder() {
         }
@@ -18,19 +20,30 @@ public class UserParams {
             return this;
         }
 
+        public Builder withNameParams(NameParams nameParams) {
+            this.nameParams = nameParams;
+            return this;
+        }
+
+        public Builder withAddressParams(AddressParams addressParams) {
+            this.addressParams = addressParams;
+            return this;
+        }
+
         public UserParams build() {
             UserParams userParams = new UserParams();
             userParams.email = this.email;
             userParams.password = this.password;
+            userParams.nameParams = this.nameParams;
+            userParams.addressParams = this.addressParams;
             return userParams;
         }
     }
 
     private transient String email;
     private transient String password;
-    private String username;
-    private String firstName;
-    private String lastName;
+    private NameParams nameParams;
+    private AddressParams addressParams;
 
     private UserParams() {
 
@@ -44,15 +57,11 @@ public class UserParams {
         return password;
     }
 
-    public String getUsername() {
-        return username;
+    public NameParams getNameParams() {
+        return nameParams;
     }
 
-    public String getFirstName() {
-        return firstName;
-    }
-
-    public String getLastName() {
-        return lastName;
+    public AddressParams getAddressParams() {
+        return addressParams;
     }
 }

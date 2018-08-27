@@ -7,23 +7,23 @@ import com.somamission.peanutbutter.exception.BadRequestException;
 import com.somamission.peanutbutter.exception.UserNotFoundException;
 import org.springframework.security.core.userdetails.UserDetailsService;
 
-import java.io.IOException;
-
 @JsonRpcService("/user")
 public interface IUserService extends UserDetailsService {
-    public User getUserByUsername(@JsonRpcParam(value = "username") String username) throws UserNotFoundException;
+    User getUserByUsername(@JsonRpcParam(value = "username") String username) throws UserNotFoundException;
 
-    public void createNewUser(@JsonRpcParam(value = "email") String email,
-                              @JsonRpcParam(value = "username") String username,
+    void createNewUser(@JsonRpcParam(value = "username") String username,
+                              @JsonRpcParam(value = "email") String email,
                               @JsonRpcParam(value = "password") String password) throws BadRequestException;
 
-    public void updatePassword(@JsonRpcParam(value = "password") String password,
-                               @JsonRpcParam(value = "username") String username) throws BadRequestException, UserNotFoundException;
+    void updatePassword(@JsonRpcParam(value = "username") String username,
+                               @JsonRpcParam(value = "password") String password) throws BadRequestException, UserNotFoundException;
 
-    public void resetPassword(@JsonRpcParam(value = "username") String username) throws UserNotFoundException, BadRequestException;
+    void resetPassword(@JsonRpcParam(value = "username") String username) throws UserNotFoundException, BadRequestException;
 
-    public void updateEmail(@JsonRpcParam(value = "email") String email,
-                            @JsonRpcParam(value = "username") String username) throws BadRequestException, UserNotFoundException;
+    void updateEmail(@JsonRpcParam(value = "username") String username,
+                            @JsonRpcParam(value = "email") String email) throws BadRequestException, UserNotFoundException;
 
-    public void updateUserInfo(String userParamString) throws UserNotFoundException;
+    void updateUserInfo(@JsonRpcParam(value = "username") String username,
+                               @JsonRpcParam(value = "nameParams") String nameParams,
+                               @JsonRpcParam(value = "addressParams") String addressParams) throws UserNotFoundException;
 }

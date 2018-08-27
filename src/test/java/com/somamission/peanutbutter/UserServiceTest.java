@@ -31,7 +31,7 @@ public class UserServiceTest {
     @Autowired
     private PasswordEncoder passwordEncoder;
 
-    private Gson gson = new Gson();;
+    private Gson gson = new Gson();
 
     @Test
     public void should_create_a_user() throws IOException, BadRequestException, JSONException, UserNotFoundException {
@@ -40,7 +40,7 @@ public class UserServiceTest {
         String email = newUserParamsJson.optString("email");
         String username = newUserParamsJson.optString("username");
         String password = newUserParamsJson.optString("password");
-        userService.createNewUser(email, username, password);
+        userService.createNewUser(username, email, password);
         User userFromCreateRequest = gson.fromJson(newUserParams, User.class);
         User newUser = userService.getUserByUsername(userFromCreateRequest.getUsername());
         assertThat(userFromCreateRequest.getEmail()).isEqualTo(newUser.getEmail());
@@ -49,97 +49,84 @@ public class UserServiceTest {
     }
 
     @Test
-    public void should_update_user_password() throws BadRequestException, JSONException, FileNotFoundException, UserNotFoundException, JsonProcessingException {
+    public void should_update_user_password() throws BadRequestException, JSONException, FileNotFoundException, UserNotFoundException{
         String newUserParams = TestUtils.getFileToJson("json/happy/new_user.json");
         JSONObject newUserParamsJson = new JSONObject(newUserParams);
         String email = newUserParamsJson.optString("email");
         String username = newUserParamsJson.optString("username");
         String password = newUserParamsJson.optString("password");
-        userService.createNewUser(email, username, password);
-        String updateUserParams = TestUtils.getFileToJson("json/happy/existing_user.json");
+        userService.createNewUser(username, email, password);
+        String updateUserParams = TestUtils.getFileToJson("json/happy/existing_user_update_email_password.json");
         JSONObject updateUserParamsJson = new JSONObject(updateUserParams);
         String updatePassword = updateUserParamsJson.optString("password");
-        userService.updatePassword(updatePassword, username);
+        userService.updatePassword(username, updatePassword);
         User updatedUser = userService.getUserByUsername(username);
         assertThat(passwordEncoder.matches(updatePassword, updatedUser.getPassword())).isTrue();
     }
 
     @Test
-    public void should_reset_user_password() throws FileNotFoundException, JSONException, BadRequestException, JsonProcessingException, UserNotFoundException {
+    public void should_reset_user_password() throws FileNotFoundException, JSONException, BadRequestException, UserNotFoundException {
         String newUserParams = TestUtils.getFileToJson("json/happy/new_user.json");
         JSONObject newUserParamsJson = new JSONObject(newUserParams);
         String email = newUserParamsJson.optString("email");
         String username = newUserParamsJson.optString("username");
         String password = newUserParamsJson.optString("password");
-        userService.createNewUser(email, username, password);
+        userService.createNewUser(username, email, password);
         userService.resetPassword(username);
         User updatedUser = userService.getUserByUsername(username);
         assertThat(passwordEncoder.matches(updatedUser.getPassword(), password)).isFalse();
     }
 
     @Test
-    public void should_update_email() throws FileNotFoundException, JSONException, BadRequestException, JsonProcessingException, UserNotFoundException {
+    public void should_update_email() throws FileNotFoundException, JSONException, BadRequestException, UserNotFoundException {
         String newUserParams = TestUtils.getFileToJson("json/happy/new_user.json");
         JSONObject newUserParamsJson = new JSONObject(newUserParams);
         String email = newUserParamsJson.optString("email");
         String username = newUserParamsJson.optString("username");
         String password = newUserParamsJson.optString("password");
-        userService.createNewUser(email, username, password);
-        String updateUserParams = TestUtils.getFileToJson("json/happy/existing_user.json");
+        userService.createNewUser(username, email, password);
+        String updateUserParams = TestUtils.getFileToJson("json/happy/existing_user_update_email_password.json");
         JSONObject updateUserParamsJson = new JSONObject(updateUserParams);
         String updateEmail = updateUserParamsJson.optString("email");
-        userService.updateEmail(updateEmail, username);
+        userService.updateEmail(username, updateEmail);
         User updatedUser = userService.getUserByUsername(username);
         assertThat(updateEmail.equals(updatedUser.getEmail())).isTrue();
     }
 
     @Test
-    public void should_update_user_info() throws IOException, BadRequestException, JSONException, UserNotFoundException {
-        String newUserParams = TestUtils.getFileToJson("json/happy/new_user.json");
-        JSONObject newUserParamsJson = new JSONObject(newUserParams);
-        String email = newUserParamsJson.optString("email");
-        String username = newUserParamsJson.optString("username");
-        String password = newUserParamsJson.optString("password");
-        userService.createNewUser(email, username, password);
-        String updateUserParams = TestUtils.getFileToJson("json/happy/existing_user.json");
-        userService.updateUserInfo(updateUserParams);
-        JSONObject updateUserParamsJson = new JSONObject(updateUserParams);
-        String usernameParam = updateUserParamsJson.optString("username");
-        User updateUser = userService.getUserByUsername(usernameParam);
-        User userFromUpdateRequest = gson.fromJson(updateUserParams, User.class);
-        assertThat(userFromUpdateRequest.getFirstName()).isEqualTo(updateUser.getFirstName());
-        assertThat(userFromUpdateRequest.getLastName()).isEqualTo(updateUser.getLastName());
+    public void should_update_user_info_names() throws IOException, BadRequestException, JSONException, UserNotFoundException {
+        // TODO
     }
 
     @Test
-    public void should_not_update_a_user_password() throws FileNotFoundException, JSONException, UserNotFoundException, JsonProcessingException {
+    public void should_not_update_a_user_password() {
         assertThatExceptionOfType(BadRequestException.class).isThrownBy(() -> {
             String newUserParams = TestUtils.getFileToJson("json/happy/new_user.json");
             JSONObject newUserParamsJson = new JSONObject(newUserParams);
             String email = newUserParamsJson.optString("email");
             String username = newUserParamsJson.optString("username");
             String password = newUserParamsJson.optString("password");
-            userService.createNewUser(email, username, password);
+            userService.createNewUser(username, email, password);
             String updateUserParams = TestUtils.getFileToJson("json/edge/user_with_insecure_password.json");
             JSONObject updateUserParamsJson = new JSONObject(updateUserParams);
             String updatePassword = updateUserParamsJson.optString("password");
-            userService.updatePassword(updatePassword, username);
+            userService.updatePassword(username, updatePassword);
         }).withMessageContaining(ErrorMessageContants.PASSWORD_FORMAT_REQUIREMENTS);
     }
 
     @Test
-    public void should_not_update_a_user_email() throws FileNotFoundException, JSONException, UserNotFoundException, JsonProcessingException {
+    public void should_not_update_a_user_email() {
         assertThatExceptionOfType(BadRequestException.class).isThrownBy(() -> {
             String newUserParams = TestUtils.getFileToJson("json/happy/new_user.json");
             JSONObject newUserParamsJson = new JSONObject(newUserParams);
             String email = newUserParamsJson.optString("email");
             String username = newUserParamsJson.optString("username");
             String password = newUserParamsJson.optString("password");
-            userService.createNewUser(email, username, password);
+            userService.createNewUser(username, email, password);
             String updateUserParams = TestUtils.getFileToJson("json/edge/user_with_malformed_email.json");
             JSONObject updateUserParamsJson = new JSONObject(updateUserParams);
             String updateEmail = updateUserParamsJson.optString("email");
-            userService.updateEmail(updateEmail, username);
+            userService.updateEmail(username, updateEmail);
         }).withMessageContaining(ErrorMessageContants.EMAIL_FORMAT_REQUIREMENTS);
     }
 
@@ -150,7 +137,7 @@ public class UserServiceTest {
         String email = newUserParamsJson.optString("email");
         String username = newUserParamsJson.optString("username");
         String password = newUserParamsJson.optString("password");
-        userService.createNewUser(email, username, password);
+        userService.createNewUser(username, email, password);
         User foundUser = userService.getUserByUsername(username);
         User userFromUpdateRequest = gson.fromJson(newUserParams, User.class);
         assertThat(userFromUpdateRequest.getEmail()).isEqualTo(foundUser.getEmail());
@@ -164,6 +151,6 @@ public class UserServiceTest {
         String email = newUserParamsJson.optString("email");
         String username = newUserParamsJson.optString("username");
         String password = newUserParamsJson.optString("password");
-        userService.createNewUser(email, username, password);
+        userService.createNewUser(username, email, password);
     }
 }

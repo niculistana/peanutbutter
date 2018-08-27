@@ -1,0 +1,15 @@
+{
+  "username": "fbar",
+  "nameParams": {
+    "firstName": "Foo",
+    "lastName": "Bar"
+  },
+  "addressParams": {
+    "addressLineOne": "123 Main St.",
+    "addressLineTwo": "",
+    "city": "New York",
+    "state": "NY",
+    "zip": 10001,
+    "country": "United States"
+  }
+}

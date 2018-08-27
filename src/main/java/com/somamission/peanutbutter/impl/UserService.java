@@ -8,6 +8,8 @@ import com.somamission.peanutbutter.exception.BadRequestException;
 import com.somamission.peanutbutter.exception.ObjectNotFoundException;
 import com.somamission.peanutbutter.exception.UserNotFoundException;
 import com.somamission.peanutbutter.intf.IUserService;
+import com.somamission.peanutbutter.param.AddressParams;
+import com.somamission.peanutbutter.param.NameParams;
 import com.somamission.peanutbutter.param.UserParams;
 import com.somamission.peanutbutter.repository.IUserRepository;
 import org.apache.commons.lang3.StringUtils;
@@ -70,7 +72,7 @@ public class UserService implements IUserService {
     }
 
     @Override
-    public void createNewUser(String email, String username, String password) throws BadRequestException {
+    public void createNewUser(String username, String email, String password) throws BadRequestException {
         logger.info("Inserting new user");
 
         if (StringUtils.isEmpty(email)) {
@@ -114,7 +116,7 @@ public class UserService implements IUserService {
     }
 
     @Override
-    public void updatePassword(String password, String username) throws BadRequestException, UserNotFoundException {
+    public void updatePassword(String username, String password) throws BadRequestException, UserNotFoundException {
         logger.info("Updating user password");
         if (StringUtils.isEmpty(username)) {
             logger.info(ErrorMessageContants.REQUIRED_PARAMETER_NOT_FOUND + ": username");
@@ -139,7 +141,7 @@ public class UserService implements IUserService {
     }
 
     @Override
-    public void updateEmail(String email, String username) throws BadRequestException, UserNotFoundException {
+    public void updateEmail(String username, String email) throws BadRequestException, UserNotFoundException {
         logger.info("Updating user email");
         if (StringUtils.isEmpty(username)) {
             logger.info(ErrorMessageContants.REQUIRED_PARAMETER_NOT_FOUND + ": username");
@@ -158,29 +160,35 @@ public class UserService implements IUserService {
     }
 
     @Override
-    public void updateUserInfo(String userParamString) throws UserNotFoundException {
+    public void updateUserInfo(String username, String nameParamString, String addressParamString) throws UserNotFoundException {
         logger.info("Updating user info");
         Gson gson = new Gson();
-        UserParams userParams = gson.fromJson(userParamString, UserParams.class);
-        User user = getUserByUsername(userParams.getUsername());
+        NameParams nameParams = gson.fromJson(nameParamString, NameParams.class);
+        AddressParams addressParams = gson.fromJson(addressParamString, AddressParams.class);
+        User user = getUserByUsername(username);
+        UserParams userParams = new UserParams.Builder().withNameParams(nameParams).withAddressParams(addressParams).build();
         updateUser(user, userParams);
     }
 
     private void updateUser(User user, UserParams userParams) {
         if (!StringUtils.isEmpty(userParams.getEmail())) {
-            user.setEmail(userParams.getEmail());
+            user.setEmail(StringUtils.trim(userParams.getEmail()));
         }
 
         if (!StringUtils.isEmpty(userParams.getPassword())) {
-            user.setPassword(passwordEncoder.encode(userParams.getPassword()));
+            user.setPassword(passwordEncoder.encode(StringUtils.trim(userParams.getPassword())));
         }
 
-        if (!StringUtils.isEmpty(userParams.getFirstName())) {
-            user.setFirstName(userParams.getFirstName());
+        if (!StringUtils.isEmpty(userParams.getNameParams().getFirstName())) {
+            user.setFirstName(StringUtils.trim(userParams.getNameParams().getFirstName()));
         }
 
-        if (!StringUtils.isEmpty(userParams.getLastName())) {
-            user.setLastName(userParams.getLastName());
+        if (!StringUtils.isEmpty(userParams.getNameParams().getLastName())) {
+            user.setLastName(StringUtils.trim(userParams.getNameParams().getLastName()));
+        }
+
+        if (!StringUtils.isEmpty(userParams.getAddressParams().getFullAddress())) {
+            user.setFullAddress(StringUtils.trim(userParams.getAddressParams().getFullAddress()));
         }
 
         userRepository.save(user);

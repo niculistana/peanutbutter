@@ -19,10 +19,12 @@ public class User implements Serializable {
     private String email;
     @Column(nullable = false)
     private transient String password;
-    @Column(length = 60, name = "first_name")
+    @Column(length = 60, name = "name_first")
     private String firstName;
-    @Column(length = 60, name = "last_name")
+    @Column(length = 60, name = "name_last")
     private String lastName;
+    @Column(name = "address_full")
+    private String fullAddress;
 
     public User() {
     }
@@ -65,5 +67,13 @@ public class User implements Serializable {
 
     public void setPassword(String password) {
         this.password = password;
+    }
+
+    public String getFullAddress() {
+        return fullAddress;
+    }
+
+    public void setFullAddress(String fullAddress) {
+        this.fullAddress = fullAddress;
     }
 }
