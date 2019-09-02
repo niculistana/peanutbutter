@@ -4,7 +4,6 @@ Authorization server based on Spring Boot
 ### Requirements
 ```
 install and run java 1.8, maven, redis
-
 ```
 ### Usage
 ```

@@ -1,5 +1,6 @@
 /target/
 .mvn/
+.git/
 
 ### STS ###
 .apt_generated
