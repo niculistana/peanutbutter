@@ -7,9 +7,6 @@ public class UserParams {
         private NameParams nameParams;
         private AddressParams addressParams;
 
-        public Builder() {
-        }
-
         public Builder withEmail(String email) {
             this.email = email;
             return this;
@@ -40,8 +37,8 @@ public class UserParams {
         }
     }
 
-    private transient String email;
-    private transient String password;
+    private String email;
+    private String password;
     private NameParams nameParams;
     private AddressParams addressParams;
 

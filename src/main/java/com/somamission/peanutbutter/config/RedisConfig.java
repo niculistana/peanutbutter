@@ -1,6 +1,5 @@
 package com.somamission.peanutbutter.config;
 
-import com.somamission.peanutbutter.impl.UserService;
 import org.redisson.Redisson;
 import org.redisson.api.RedissonClient;
 import org.redisson.config.Config;
@@ -11,26 +10,24 @@ import org.springframework.context.annotation.Configuration;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Objects;
 
 @Configuration
 public class RedisConfig {
-    private static Logger logger = LoggerFactory.getLogger(UserService.class);
+    private static final Logger logger = LoggerFactory.getLogger(RedisConfig.class);
 
     @Bean
     public RedissonClient redissonClient() {
         try {
             return configureRedissionClient();
         } catch (IOException e) {
-            // FIXME: how do I handle bean-level exceptions??
-            // also, handle master-slave redis configuration when RedisConnectionException gets thrown
-            e.printStackTrace();
-            logger.error("Unable to set-up redisson client. Reason: " + e.getMessage());
+            logger.error("Unable to set-up redisson client.");
             return null;
         }
     }
 
     private RedissonClient configureRedissionClient() throws IOException {
-        File redisConfigFile = new File(RedisConfig.class.getClassLoader().getResource("redis-config.yaml").getFile());
+        File redisConfigFile = new File(Objects.requireNonNull(RedisConfig.class.getClassLoader().getResource("redis-config.yaml")).getFile());
         Config config = Config.fromYAML(redisConfigFile);
         return Redisson.create(config);
     }

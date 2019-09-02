@@ -1,13 +1,17 @@
 package com.somamission.peanutbutter.domain;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+import lombok.Data;
+
 import javax.persistence.*;
 import java.io.Serializable;
 
 @Entity
 @Table(name = "users")
+@Data
 public class User implements Serializable {
 
-    private static final long serialVersionUID = -3009157732242241606L;
+    private static final long serialVersionUID = 1L;
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
@@ -18,62 +22,12 @@ public class User implements Serializable {
     @Column(nullable = false, unique = true)
     private String email;
     @Column(nullable = false)
-    private transient String password;
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
+    private String password;
     @Column(length = 60, name = "name_first")
     private String firstName;
     @Column(length = 60, name = "name_last")
     private String lastName;
     @Column(name = "address_full")
     private String fullAddress;
-
-    public User() {
-    }
-
-    public String getUsername() {
-        return username;
-    }
-
-    public void setUsername(String username) {
-        this.username = username;
-    }
-
-    public String getFirstName() {
-        return firstName;
-    }
-
-    public void setFirstName(String firstName) {
-        this.firstName = firstName;
-    }
-
-    public String getLastName() {
-        return lastName;
-    }
-
-    public void setLastName(String lastName) {
-        this.lastName = lastName;
-    }
-
-    public String getEmail() {
-        return email;
-    }
-
-    public void setEmail(String email) {
-        this.email = email;
-    }
-
-    public String getPassword() {
-        return password;
-    }
-
-    public void setPassword(String password) {
-        this.password = password;
-    }
-
-    public String getFullAddress() {
-        return fullAddress;
-    }
-
-    public void setFullAddress(String fullAddress) {
-        this.fullAddress = fullAddress;
-    }
 }

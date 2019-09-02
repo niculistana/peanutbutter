@@ -1,21 +1,35 @@
 package com.somamission.peanutbutter;
 
-import com.google.gson.Gson;
-import com.google.gson.JsonElement;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.Objects;
 
-public class TestUtils {
+class TestUtils {
+    private static final Logger logger = LoggerFactory.getLogger(TestUtils.class);
 
-    public static String getFileToJson(String fileName) throws FileNotFoundException {
-        Gson gson = new Gson();
-        Reader reader = new FileReader(getResourceFilePath(fileName));
-        JsonElement json = gson.fromJson(reader, JsonElement.class);
-        return gson.toJson(json);
+    private TestUtils() {
+        throw new IllegalStateException("Utility class");
+    }
+
+    static String getFileToJson(String fileName) {
+        String content = "";
+        String absolutePath = getResourceFilePath(fileName);
+        try {
+            content = new String(Files.readAllBytes(Paths.get(absolutePath)));
+        } catch (IOException e) {
+            logger.error("Error reading file");
+        }
+
+        return content;
     }
 
     private static String getResourceFilePath(String fileName) {
-        File f = new File(TestUtils.class.getClassLoader().getResource(fileName).getFile());
+        File f = new File(Objects.requireNonNull(TestUtils.class.getClassLoader().getResource(fileName)).getFile());
         return f.getAbsolutePath();
     }
 }

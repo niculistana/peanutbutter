@@ -3,16 +3,13 @@ package com.somamission.peanutbutter.param;
 import org.apache.commons.lang3.StringUtils;
 
 public class AddressParams {
-    public static class Builder {
+    private static class Builder {
         private String addressLineOne;
         private String addressLineTwo;
         private String city;
         private String state;
         private String country;
         private String zip;
-
-        public Builder() {
-        }
 
         private Builder withAddressLineOne(String addressLineOne) {
             this.addressLineOne = addressLineOne;
@@ -63,9 +60,6 @@ public class AddressParams {
     private String country;
     private String zip;
 
-    public AddressParams() {
-    }
-
     public String getAddressLineOne() {
         return addressLineOne;
     }
@@ -91,7 +85,7 @@ public class AddressParams {
     }
 
     public String getFullAddress() {
-        String [] fullAddressFields = {this.addressLineOne, this.addressLineTwo, this.city, this.state, this.country, this.zip};
-        return StringUtils.join(fullAddressFields , ",");
+        String[] fullAddressFields = {this.addressLineOne, this.addressLineTwo, this.city, this.state, this.country, this.zip};
+        return StringUtils.join(fullAddressFields, ",");
     }
 }

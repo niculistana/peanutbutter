@@ -1,15 +1,11 @@
 package com.somamission.peanutbutter.impl;
 
-import com.google.gson.Gson;
-import com.googlecode.jsonrpc4j.spring.AutoJsonRpcServiceImpl;
-import com.somamission.peanutbutter.constants.ErrorMessageContants;
+import com.somamission.peanutbutter.constants.ErrorMessageConstants;
 import com.somamission.peanutbutter.domain.User;
 import com.somamission.peanutbutter.exception.BadRequestException;
 import com.somamission.peanutbutter.exception.ObjectNotFoundException;
 import com.somamission.peanutbutter.exception.UserNotFoundException;
 import com.somamission.peanutbutter.intf.IUserService;
-import com.somamission.peanutbutter.param.AddressParams;
-import com.somamission.peanutbutter.param.NameParams;
 import com.somamission.peanutbutter.param.UserParams;
 import com.somamission.peanutbutter.repository.IUserRepository;
 import org.apache.commons.lang3.StringUtils;
@@ -25,23 +21,24 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 
 @Service
-@AutoJsonRpcServiceImpl
 public class UserService implements IUserService {
-    private static Logger logger = LoggerFactory.getLogger(UserService.class);
+    private static final String USERNAME_INVALID_MSG = ErrorMessageConstants.REQUIRED_PARAMETER_NOT_FOUND + ": username";
+    private static final String EMAIL_INVALID_MSG = ErrorMessageConstants.REQUIRED_PARAMETER_NOT_FOUND + ": email";
+    private static final String PASSWORD_INVALID_MSG = ErrorMessageConstants.REQUIRED_PARAMETER_NOT_FOUND + ": password";
+    private static final Logger logger = LoggerFactory.getLogger(UserService.class);
 
     @Autowired
-    IUserRepository userRepository;
+    private IUserRepository userRepository;
 
     @Autowired
-    PasswordEncoder passwordEncoder;
+    private PasswordEncoder passwordEncoder;
 
     @Autowired
-    RedissonClient redissonClient;
+    private RedissonClient redissonClient;
 
     @Override
     public User getUserByUsername(String username) throws UserNotFoundException {
@@ -76,32 +73,32 @@ public class UserService implements IUserService {
         logger.info("Inserting new user");
 
         if (StringUtils.isEmpty(email)) {
-            logger.info(ErrorMessageContants.REQUIRED_PARAMETER_NOT_FOUND + ": email");
-            throw new BadRequestException(ErrorMessageContants.REQUIRED_PARAMETER_NOT_FOUND + ": email");
+            logger.info(EMAIL_INVALID_MSG);
+            throw new BadRequestException(EMAIL_INVALID_MSG);
         }
         if (StringUtils.isEmpty(username)) {
-            logger.info(ErrorMessageContants.REQUIRED_PARAMETER_NOT_FOUND + ": username");
-            throw new BadRequestException(ErrorMessageContants.REQUIRED_PARAMETER_NOT_FOUND + ": username");
+            logger.info(USERNAME_INVALID_MSG);
+            throw new BadRequestException(USERNAME_INVALID_MSG);
         }
         if (StringUtils.isEmpty(password)) {
-            logger.info(ErrorMessageContants.REQUIRED_PARAMETER_NOT_FOUND + ": password");
-            throw new BadRequestException(ErrorMessageContants.REQUIRED_PARAMETER_NOT_FOUND + ": password");
+            logger.info(PASSWORD_INVALID_MSG);
+            throw new BadRequestException(PASSWORD_INVALID_MSG);
         }
 
         if (!isEmailValid(email)) {
-            String emailNotValidMessage = email + " email is invalid. Requirements: " + ErrorMessageContants.EMAIL_FORMAT_REQUIREMENTS;
+            String emailNotValidMessage = email + " email is invalid. Requirements: " + ErrorMessageConstants.EMAIL_FORMAT_REQUIREMENTS;
             logger.info(emailNotValidMessage);
             throw new BadRequestException(emailNotValidMessage);
         }
 
         if (!isUsernameValid(username)) {
-            String usernameNotValidMessage = username + " username is invalid. Requirements: " + ErrorMessageContants.USERNAME_FORMAT_REQUIREMENTS;
+            String usernameNotValidMessage = username + " username is invalid. Requirements: " + ErrorMessageConstants.USERNAME_FORMAT_REQUIREMENTS;
             logger.info(usernameNotValidMessage);
             throw new BadRequestException(usernameNotValidMessage);
         }
 
         if (!isPasswordValid(password)) {
-            String passwordIsNotSecureEnoughMessage = "password is invalid. Requirements: " + ErrorMessageContants.PASSWORD_FORMAT_REQUIREMENTS;
+            String passwordIsNotSecureEnoughMessage = "password is invalid. Requirements: " + ErrorMessageConstants.PASSWORD_FORMAT_REQUIREMENTS;
             logger.info(passwordIsNotSecureEnoughMessage);
             throw new BadRequestException(passwordIsNotSecureEnoughMessage);
         }
@@ -119,12 +116,12 @@ public class UserService implements IUserService {
     public void updatePassword(String username, String password) throws BadRequestException, UserNotFoundException {
         logger.info("Updating user password");
         if (StringUtils.isEmpty(username)) {
-            logger.info(ErrorMessageContants.REQUIRED_PARAMETER_NOT_FOUND + ": username");
-            throw new BadRequestException(ErrorMessageContants.REQUIRED_PARAMETER_NOT_FOUND + ": username");
+            logger.info(USERNAME_INVALID_MSG);
+            throw new BadRequestException(USERNAME_INVALID_MSG);
         }
 
         if (!isPasswordValid(password)) {
-            String passwordIsNotSecureEnoughMessage = "password is invalid. Requirements: " + ErrorMessageContants.PASSWORD_FORMAT_REQUIREMENTS;
+            String passwordIsNotSecureEnoughMessage = "password is invalid. Requirements: " + ErrorMessageConstants.PASSWORD_FORMAT_REQUIREMENTS;
             logger.info(passwordIsNotSecureEnoughMessage);
             throw new BadRequestException(passwordIsNotSecureEnoughMessage);
         }
@@ -137,36 +134,25 @@ public class UserService implements IUserService {
     @Override
     public void resetPassword(String username) throws UserNotFoundException, BadRequestException {
         logger.info("Resetting user password");
-        updatePassword(generatePassword(), username);
+        updatePassword(username, generatePassword());
     }
 
     @Override
     public void updateEmail(String username, String email) throws BadRequestException, UserNotFoundException {
         logger.info("Updating user email");
         if (StringUtils.isEmpty(username)) {
-            logger.info(ErrorMessageContants.REQUIRED_PARAMETER_NOT_FOUND + ": username");
-            throw new BadRequestException(ErrorMessageContants.REQUIRED_PARAMETER_NOT_FOUND + ": username");
+            logger.info(USERNAME_INVALID_MSG);
+            throw new BadRequestException(USERNAME_INVALID_MSG);
         }
 
         if (!isEmailValid(email)) {
-            String emailNotValidMessage = email + " email is invalid. Requirements: " + ErrorMessageContants.EMAIL_FORMAT_REQUIREMENTS;
+            String emailNotValidMessage = email + " email is invalid. Requirements: " + ErrorMessageConstants.EMAIL_FORMAT_REQUIREMENTS;
             logger.info(emailNotValidMessage);
             throw new BadRequestException(emailNotValidMessage);
         }
 
         User user = getUserByUsername(username);
         UserParams userParams = new UserParams.Builder().withEmail(email).build();
-        updateUser(user, userParams);
-    }
-
-    @Override
-    public void updateUserInfo(String username, String nameParamString, String addressParamString) throws UserNotFoundException {
-        logger.info("Updating user info");
-        Gson gson = new Gson();
-        NameParams nameParams = gson.fromJson(nameParamString, NameParams.class);
-        AddressParams addressParams = gson.fromJson(addressParamString, AddressParams.class);
-        User user = getUserByUsername(username);
-        UserParams userParams = new UserParams.Builder().withNameParams(nameParams).withAddressParams(addressParams).build();
         updateUser(user, userParams);
     }
 
@@ -179,25 +165,23 @@ public class UserService implements IUserService {
             user.setPassword(passwordEncoder.encode(StringUtils.trim(userParams.getPassword())));
         }
 
-        if (!StringUtils.isEmpty(userParams.getNameParams().getFirstName())) {
-            user.setFirstName(StringUtils.trim(userParams.getNameParams().getFirstName()));
+        if (null != userParams.getNameParams()) {
+            if (!StringUtils.isEmpty(userParams.getNameParams().getFirstName())) {
+                user.setFirstName(StringUtils.trim(userParams.getNameParams().getFirstName()));
+            }
+
+            if (!StringUtils.isEmpty(userParams.getNameParams().getLastName())) {
+                user.setLastName(StringUtils.trim(userParams.getNameParams().getLastName()));
+            }
         }
 
-        if (!StringUtils.isEmpty(userParams.getNameParams().getLastName())) {
-            user.setLastName(StringUtils.trim(userParams.getNameParams().getLastName()));
-        }
-
-        if (!StringUtils.isEmpty(userParams.getAddressParams().getFullAddress())) {
+        if (null != userParams.getAddressParams() && !StringUtils.isEmpty(userParams.getAddressParams().getFullAddress())) {
             user.setFullAddress(StringUtils.trim(userParams.getAddressParams().getFullAddress()));
         }
 
         userRepository.save(user);
         RBucket<User> bucket = redissonClient.getBucket(user.getUsername());
         bucket.set(user);
-    }
-
-    private User findUserById(Long userId) throws ObjectNotFoundException {
-        return userRepository.findById(userId).orElseThrow(ObjectNotFoundException::new);
     }
 
     private boolean isEmailValid(String email) {
@@ -214,6 +198,7 @@ public class UserService implements IUserService {
     }
 
     private boolean isPasswordValid(String password) {
+        // TODO: check how to limit the special characters to a set of common special characters, ie: '!,?,*,...'
         PasswordValidator validator = new PasswordValidator(
                 new LengthRule(8, 128),
                 new CharacterRule(EnglishCharacterData.UpperCase, 1),
@@ -224,10 +209,6 @@ public class UserService implements IUserService {
 
         RuleResult result = validator.validate(new PasswordData(password));
         return result.isValid();
-    }
-
-    private void addMessageToNotificationQueue(String message) {
-        // TODO: implement this
     }
 
     private String generatePassword() {

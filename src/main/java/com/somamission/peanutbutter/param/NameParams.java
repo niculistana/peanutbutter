@@ -5,8 +5,6 @@ public class NameParams {
         private String firstName;
         private String lastName;
 
-        public Builder() {}
-
         public Builder withFirstName(String firstName) {
             this.firstName = firstName;
             return this;
@@ -28,9 +26,6 @@ public class NameParams {
 
     private String firstName;
     private String lastName;
-
-    public NameParams() {
-    }
 
     public String getFirstName() {
         return firstName;
