@@ -16,6 +16,9 @@ import org.redisson.api.RedissonClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.CacheManager;
+import org.springframework.cache.annotation.CachePut;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -40,7 +43,11 @@ public class UserService implements IUserService {
     @Autowired
     private RedissonClient redissonClient;
 
+    @Autowired
+    private CacheManager cacheManager;
+
     @Override
+    @Cacheable("users")
     public User getUserByUsername(String username) throws UserNotFoundException {
         logger.info("Getting user by username");
         try {
@@ -69,6 +76,7 @@ public class UserService implements IUserService {
     }
 
     @Override
+    @CachePut("users")
     public void createNewUser(String username, String email, String password) throws BadRequestException {
         logger.info("Inserting new user");
 

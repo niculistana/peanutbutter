@@ -1,8 +1,28 @@
-version: 2
-jobs:
-  build:
-    docker:
-      - image: circleci/ruby:2.4.1
-    steps:
-      - checkout
-      - run: echo "A first hello"
+version: 2 # use CircleCI 2.0
+jobs: # a collection of steps
+  build: # runs not using Workflows must have a `build` job as entry point
+
+    working_directory: ~/peanutbutter # directory where steps will run
+
+    docker: # run the steps with Docker
+      - image: circleci/openjdk:8-jdk-stretch # jdk in debian
+      - image: redis
+
+    steps: # a collection of executable commands
+
+      - checkout # check out source code to working directory
+
+      - restore_cache: # restore the saved cache after the first run or if `pom.xml` has changed
+          key: peanutbutter-{{ checksum "pom.xml" }}
+
+      - run: mvn dependency:go-offline # gets the project dependencies
+
+      - save_cache: # saves the project dependencies
+          paths:
+            - ~/.m2
+          key: peanutbutter-{{ checksum "pom.xml" }}
+
+      - run: mvn verify # run the actual tests
+
+      - store_artifacts: # store JaCoCo test results
+          path: target/code-coverage
