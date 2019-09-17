@@ -36,6 +36,7 @@ public class UserParams {
         public UserParams build() {
             UserParams userParams = new UserParams();
             userParams.email = this.email;
+            userParams.username = this.username;
             userParams.password = this.password;
             userParams.nameParams = this.nameParams;
             userParams.addressParams = this.addressParams;

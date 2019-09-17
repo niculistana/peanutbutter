@@ -11,7 +11,7 @@ import com.somamission.peanutbutter.repository.IUserRepository;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.validator.routines.EmailValidator;
 import org.passay.*;
-import org.redisson.api.RBucket;
+import org.redisson.api.RMapCache;
 import org.redisson.api.RedissonClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,6 +26,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 @Service
 public class UserService implements IUserService {
@@ -47,21 +48,14 @@ public class UserService implements IUserService {
     private CacheManager cacheManager;
 
     @Override
-    @Cacheable("users")
+    @Cacheable(cacheNames = "users", key = "#username")
     public User getUserByUsername(String username) throws UserNotFoundException {
         logger.info("Getting user by username");
         try {
             if (StringUtils.isEmpty(username)) {
                 throw new ObjectNotFoundException();
             }
-            RBucket<User> bucket = redissonClient.getBucket(username);
-            User user = bucket.get();
-            if (user != null) {
-                return user;
-            }
-            user = userRepository.findByUsername(username).orElseThrow(ObjectNotFoundException::new);
-            bucket.set(user);
-            return user;
+            return userRepository.findByUsername(username).orElseThrow(ObjectNotFoundException::new);
         } catch (ObjectNotFoundException e) {
             String notFoundMessage = "username " + username + " not found";
             logger.info(notFoundMessage);
@@ -76,7 +70,6 @@ public class UserService implements IUserService {
     }
 
     @Override
-    @CachePut("users")
     public void createNewUser(String username, String email, String password) throws BadRequestException {
         logger.info("Inserting new user");
 
@@ -111,13 +104,12 @@ public class UserService implements IUserService {
             throw new BadRequestException(passwordIsNotSecureEnoughMessage);
         }
 
-        User newUser = new User();
-        newUser.setEmail(email);
-        newUser.setUsername(username);
-        newUser.setPassword(passwordEncoder.encode(password));
-        userRepository.save(newUser);
-        RBucket<User> bucket = redissonClient.getBucket(username);
-        bucket.set(newUser);
+        User user = new User();
+        user.setEmail(email);
+        user.setUsername(username);
+        user.setPassword(passwordEncoder.encode(password));
+        userRepository.save(user);
+        updateUsersCacheForUsername(username, user);
     }
 
     @Override
@@ -134,9 +126,8 @@ public class UserService implements IUserService {
             throw new BadRequestException(passwordIsNotSecureEnoughMessage);
         }
 
-        User user = getUserByUsername(username);
-        UserParams userParams = new UserParams.Builder().withPassword(password).build();
-        updateUser(user, userParams);
+        UserParams userParams = new UserParams.Builder().withUsername(username).withPassword(password).build();
+        updateUser(userParams);
     }
 
     @Override
@@ -159,12 +150,18 @@ public class UserService implements IUserService {
             throw new BadRequestException(emailNotValidMessage);
         }
 
-        User user = getUserByUsername(username);
         UserParams userParams = new UserParams.Builder().withEmail(email).build();
-        updateUser(user, userParams);
+        updateUser(userParams);
     }
 
-    private void updateUser(User user, UserParams userParams) {
+    private void updateUser(UserParams userParams) throws UserNotFoundException {
+        String username = userParams.getUsername();
+        User user = null;
+        try {
+            user = userRepository.findByUsername(username).orElseThrow(ObjectNotFoundException::new);
+        } catch (ObjectNotFoundException e) {
+            throw new UserNotFoundException(username);
+        }
         if (!StringUtils.isEmpty(userParams.getEmail())) {
             user.setEmail(StringUtils.trim(userParams.getEmail()));
         }
@@ -186,10 +183,8 @@ public class UserService implements IUserService {
         if (null != userParams.getAddressParams() && !StringUtils.isEmpty(userParams.getAddressParams().getFullAddress())) {
             user.setFullAddress(StringUtils.trim(userParams.getAddressParams().getFullAddress()));
         }
-
         userRepository.save(user);
-        RBucket<User> bucket = redissonClient.getBucket(user.getUsername());
-        bucket.set(user);
+        updateUsersCacheForUsername(username, user);
     }
 
     private boolean isEmailValid(String email) {
@@ -228,5 +223,11 @@ public class UserService implements IUserService {
 
         PasswordGenerator generator = new PasswordGenerator();
         return generator.generatePassword(12, rules);
+    }
+
+    @CachePut(cacheNames = "users", key = "#username")
+    private void updateUsersCacheForUsername(String username, User user) {
+        RMapCache<String, User> userRMapCache = redissonClient.getMapCache("users");
+        userRMapCache.put(username, user, 30, TimeUnit.MINUTES);
     }
 }
