@@ -3,12 +3,18 @@ package com.somamission.peanutbutter.param;
 public class UserParams {
     public static class Builder {
         private String email;
+        private String username;
         private String password;
         private NameParams nameParams;
         private AddressParams addressParams;
 
         public Builder withEmail(String email) {
             this.email = email;
+            return this;
+        }
+
+        public Builder withUsername(String username) {
+            this.username = username;
             return this;
         }
 
@@ -30,6 +36,7 @@ public class UserParams {
         public UserParams build() {
             UserParams userParams = new UserParams();
             userParams.email = this.email;
+            userParams.username = this.username;
             userParams.password = this.password;
             userParams.nameParams = this.nameParams;
             userParams.addressParams = this.addressParams;
@@ -39,6 +46,7 @@ public class UserParams {
 
     private String email;
     private String password;
+    private String username;
     private NameParams nameParams;
     private AddressParams addressParams;
 
@@ -48,6 +56,10 @@ public class UserParams {
 
     public String getEmail() {
         return email;
+    }
+
+    public String getUsername() {
+        return username;
     }
 
     public String getPassword() {

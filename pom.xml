@@ -111,11 +111,27 @@
         <dependency>
             <groupId>org.redisson</groupId>
             <artifactId>redisson</artifactId>
-            <version>3.7.5</version>
+            <version>3.11.3</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>com.fasterxml.jackson.core</groupId>
+                    <artifactId>jackson-core</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>com.fasterxml.jackson.core</groupId>
+                    <artifactId>jackson-databind</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
     </dependencies>
 
     <build>
+        <resources>
+            <resource>
+                <directory>src/main/resources</directory>
+                <filtering>true</filtering>
+            </resource>
+        </resources>
         <plugins>
             <plugin>
                 <groupId>org.springframework.boot</groupId>
@@ -135,6 +151,36 @@
                 <version>0.8.4</version>
                 <executions>
                     <execution>
+                        <id>jacoco-check</id>
+                        <goals>
+                            <goal>check</goal>
+                        </goals>
+                        <configuration>
+                            <rules>
+                                <rule>
+                                    <element>PACKAGE</element>
+                                    <limits>
+                                        <limit>
+                                            <counter>LINE</counter>
+                                            <value>COVEREDRATIO</value>
+                                            <minimum>0.50</minimum>
+                                        </limit>
+                                    </limits>
+                                </rule>
+                            </rules>
+                            <excludes>
+                                <exclude>com/somamission/peanutbutter/*</exclude>
+                                <exclude>com/somamission/peanutbutter/config/*</exclude>
+                                <exclude>com/somamission/peanutbutter/constants/*</exclude>
+                                <exclude>com/somamission/peanutbutter/controller/*</exclude>
+                                <exclude>com/somamission/peanutbutter/domain/*</exclude>
+                                <exclude>com/somamission/peanutbutter/exception/*</exclude>
+                                <exclude>com/somamission/peanutbutter/param/*</exclude>
+                            </excludes>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>prepare-agent</id>
                         <goals>
                             <goal>prepare-agent</goal>
                         </goals>
@@ -145,6 +191,26 @@
                         <goals>
                             <goal>report</goal>
                         </goals>
+                    </execution>
+                    <execution>
+                        <id>post-unit-test</id>
+                        <phase>test</phase>
+                        <goals>
+                            <goal>report</goal>
+                        </goals>
+                        <configuration>
+                            <dataFile>target/jacoco.exec</dataFile>
+                            <outputDirectory>target/code-coverage</outputDirectory>
+                            <excludes>
+                                <exclude>com/somamission/peanutbutter/*</exclude>
+                                <exclude>com/somamission/peanutbutter/config/*</exclude>
+                                <exclude>com/somamission/peanutbutter/constants/*</exclude>
+                                <exclude>com/somamission/peanutbutter/controller/*</exclude>
+                                <exclude>com/somamission/peanutbutter/domain/*</exclude>
+                                <exclude>com/somamission/peanutbutter/exception/*</exclude>
+                                <exclude>com/somamission/peanutbutter/param/*</exclude>
+                            </excludes>
+                        </configuration>
                     </execution>
                 </executions>
             </plugin>

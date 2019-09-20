@@ -1,0 +1,17 @@
+version: '3'
+services:
+  redis:
+    image: redis
+    container_name: cache
+    expose:
+      - 6379
+  auth:
+    build: .
+    ports:
+      - 8081:8081
+    links:
+      - redis
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+    command:
+      mvn spring-boot:run

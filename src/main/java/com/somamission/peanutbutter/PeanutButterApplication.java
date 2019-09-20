@@ -6,7 +6,6 @@ import org.springframework.boot.builder.SpringApplicationBuilder;
 
 @SpringBootApplication
 public class PeanutButterApplication {
-
     protected SpringApplicationBuilder configure(SpringApplicationBuilder application) {
         return application.sources(PeanutButterApplication.class);
     }
