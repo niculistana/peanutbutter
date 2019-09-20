@@ -150,7 +150,7 @@ public class UserService implements IUserService {
             throw new BadRequestException(emailNotValidMessage);
         }
 
-        UserParams userParams = new UserParams.Builder().withEmail(email).build();
+        UserParams userParams = new UserParams.Builder().withUsername(username).withEmail(email).build();
         updateUser(userParams);
     }
 
