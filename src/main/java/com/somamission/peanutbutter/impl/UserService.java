@@ -1,10 +1,12 @@
 package com.somamission.peanutbutter.impl;
 
 import com.somamission.peanutbutter.constants.ErrorMessageConstants;
+import com.somamission.peanutbutter.domain.ReservedWord;
 import com.somamission.peanutbutter.domain.User;
 import com.somamission.peanutbutter.exception.BadRequestException;
 import com.somamission.peanutbutter.exception.ObjectNotFoundException;
 import com.somamission.peanutbutter.exception.UserNotFoundException;
+import com.somamission.peanutbutter.intf.IReservedWordService;
 import com.somamission.peanutbutter.intf.IUserService;
 import com.somamission.peanutbutter.param.UserParams;
 import com.somamission.peanutbutter.repository.IUserRepository;
@@ -20,13 +22,13 @@ import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 @Service
 public class UserService implements IUserService {
@@ -37,6 +39,9 @@ public class UserService implements IUserService {
 
     @Autowired
     private IUserRepository userRepository;
+
+    @Autowired
+    private IReservedWordService reservedWordService;
 
     @Autowired
     private PasswordEncoder passwordEncoder;
@@ -64,9 +69,8 @@ public class UserService implements IUserService {
     }
 
     @Override
-    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        // TODO implement this
-        return null;
+    public UserDetails loadUserByUsername(String username) {
+        throw new UnsupportedOperationException();
     }
 
     @Override
@@ -99,9 +103,9 @@ public class UserService implements IUserService {
         }
 
         if (!isPasswordValid(password)) {
-            String passwordIsNotSecureEnoughMessage = "password is invalid. Requirements: " + ErrorMessageConstants.PASSWORD_FORMAT_REQUIREMENTS;
-            logger.info(passwordIsNotSecureEnoughMessage);
-            throw new BadRequestException(passwordIsNotSecureEnoughMessage);
+            String notSecureEnoughMessage = "password is invalid. Requirements: " + ErrorMessageConstants.PASSWORD_FORMAT_REQUIREMENTS;
+            logger.info(notSecureEnoughMessage);
+            throw new BadRequestException(notSecureEnoughMessage);
         }
 
         User user = new User();
@@ -188,26 +192,22 @@ public class UserService implements IUserService {
     }
 
     private boolean isEmailValid(String email) {
-        // TODO: check if email is unique
         return EmailValidator.getInstance().isValid(email);
     }
 
     private boolean isUsernameValid(String username) {
-        // TODO: implement this
-        boolean isUsernameUnique = true;
-        boolean usernameHasEnoughCharacters = true;
-        boolean isUsernameIsNotAbusive = true;
-        return isUsernameUnique && usernameHasEnoughCharacters;
+        List<String> reservedWords = reservedWordService.getAllReservedWords().stream().map(ReservedWord::getWord).collect(Collectors.toList());
+        if (username.length() < 3) return false;
+        return !reservedWords.contains(username);
     }
 
     private boolean isPasswordValid(String password) {
-        // TODO: check how to limit the special characters to a set of common special characters, ie: '!,?,*,...'
+        // should we have a special character rule?
         PasswordValidator validator = new PasswordValidator(
                 new LengthRule(8, 128),
                 new CharacterRule(EnglishCharacterData.UpperCase, 1),
                 new CharacterRule(EnglishCharacterData.LowerCase, 1),
                 new CharacterRule(EnglishCharacterData.Digit, 1),
-                new CharacterRule(EnglishCharacterData.Special, 1),
                 new WhitespaceRule());
 
         RuleResult result = validator.validate(new PasswordData(password));
