@@ -34,47 +34,42 @@ public class UserServiceTest {
     @Autowired
     private ObjectMapper objectMapper;
 
-    private static final String HAPPY_PATH = "json/happy/new_user.json";
+    private static final String NEW_USER_PATH = "json/happy/new_user.json";
+    private static final String EXISTING_USER_PATH = "json/happy/existing_user_update_email_password.json";
+    private static final String WITH_INSECURE_PASSWORD_PATH = "json/edge/user_with_insecure_password.json";
+    private static final String WITH_MALFORMED_EMAIL_PATH = "json/edge/user_with_malformed_email.json";
     private static final String EMAIL_FIELD = "email";
     private static final String USERNAME_FIELD = "username";
     private static final String PASSWORD_FIELD = "password";
 
     @Test
     public void shouldCreateAUser() throws IOException, BadRequestException, JSONException, UserNotFoundException {
-        String newUserParams = TestUtils.getFileToJson(HAPPY_PATH);
+        String newUserParams = TestUtils.getFileToJson(NEW_USER_PATH);
         JSONObject newUserParamsJson = new JSONObject(newUserParams);
-        String email = newUserParamsJson.optString(EMAIL_FIELD);
-        String username = newUserParamsJson.optString(USERNAME_FIELD);
-        String password = newUserParamsJson.optString(PASSWORD_FIELD);
-        userService.createNewUser(username, email, password);
+        User newUserFromRepository = createAndFindNewUser(newUserParamsJson);
         User userFromCreateRequest = objectMapper.readValue(newUserParams, User.class);
-        User newUser = userService.getUserByUsername(userFromCreateRequest.getUsername());
-        assertThat(userFromCreateRequest.getEmail()).isEqualTo(newUser.getEmail());
-        assertThat(userFromCreateRequest.getUsername()).isEqualTo(newUser.getUsername());
-        // TODO: Haven't figured out how to get Jackson to deserialize ignored fields on test
-//        assertThat(passwordEncoder.matches(userFromCreateRequest.getPassword(), newUser.getPassword())).isTrue();
+        assertThat(userFromCreateRequest.getEmail()).isEqualTo(newUserFromRepository.getEmail());
+        assertThat(userFromCreateRequest.getUsername()).isEqualTo(newUserFromRepository.getUsername());
+        assertThat(passwordEncoder.matches(userFromCreateRequest.getPassword(), newUserFromRepository.getPassword())).isTrue();
     }
 
     @Test
     public void shouldUpdateUserPassword() throws BadRequestException, JSONException, UserNotFoundException {
-        String newUserParams = TestUtils.getFileToJson(HAPPY_PATH);
+        String newUserParams = TestUtils.getFileToJson(NEW_USER_PATH);
         JSONObject newUserParamsJson = new JSONObject(newUserParams);
-        String email = newUserParamsJson.optString(EMAIL_FIELD);
-        String username = newUserParamsJson.optString(USERNAME_FIELD);
-        String password = newUserParamsJson.optString(PASSWORD_FIELD);
-        userService.createNewUser(username, email, password);
-        String updateUserParams = TestUtils.getFileToJson("json/happy/existing_user_update_email_password.json");
+        createNewUser(newUserParamsJson);
+        String updateUserParams = TestUtils.getFileToJson(EXISTING_USER_PATH);
         JSONObject updateUserParamsJson = new JSONObject(updateUserParams);
         String updatePassword = updateUserParamsJson.optString(PASSWORD_FIELD);
+        String username = updateUserParamsJson.optString(USERNAME_FIELD);
         userService.updatePassword(username, updatePassword);
-        // TODO: Haven't figured out how to get Jackson to deserialize ignored fields on test
-        // User updatedUser = userService.getUserByUsername(username);
-        // assertThat(passwordEncoder.matches(updatePassword, updatedUser.getPassword())).isTrue();
+        User updatedUser = userService.getUserByUsername(username);
+        assertThat(passwordEncoder.matches(updatePassword, updatedUser.getPassword())).isTrue();
     }
 
     @Test
     public void shouldResetUserPassword() throws JSONException, BadRequestException, UserNotFoundException {
-        String newUserParams = TestUtils.getFileToJson(HAPPY_PATH);
+        String newUserParams = TestUtils.getFileToJson(NEW_USER_PATH);
         JSONObject newUserParamsJson = new JSONObject(newUserParams);
         String email = newUserParamsJson.optString(EMAIL_FIELD);
         String username = newUserParamsJson.optString(USERNAME_FIELD);
@@ -87,15 +82,13 @@ public class UserServiceTest {
 
     @Test
     public void shouldUpdateEmail() throws JSONException, BadRequestException, UserNotFoundException {
-        String newUserParams = TestUtils.getFileToJson(HAPPY_PATH);
+        String newUserParams = TestUtils.getFileToJson(NEW_USER_PATH);
         JSONObject newUserParamsJson = new JSONObject(newUserParams);
-        String email = newUserParamsJson.optString(EMAIL_FIELD);
-        String username = newUserParamsJson.optString(USERNAME_FIELD);
-        String password = newUserParamsJson.optString(PASSWORD_FIELD);
-        userService.createNewUser(username, email, password);
-        String updateUserParams = TestUtils.getFileToJson("json/happy/existing_user_update_email_password.json");
+        createNewUser(newUserParamsJson);
+        String updateUserParams = TestUtils.getFileToJson(EXISTING_USER_PATH);
         JSONObject updateUserParamsJson = new JSONObject(updateUserParams);
         String updateEmail = updateUserParamsJson.optString(EMAIL_FIELD);
+        String username = updateUserParamsJson.optString(USERNAME_FIELD);
         userService.updateEmail(username, updateEmail);
         User updatedUser = userService.getUserByUsername(username);
         assertThat(updateEmail.equals(updatedUser.getEmail())).isTrue();
@@ -109,13 +102,13 @@ public class UserServiceTest {
     @Test
     public void shouldNotUpdateUserPassword() {
         assertThatExceptionOfType(BadRequestException.class).isThrownBy(() -> {
-            String newUserParams = TestUtils.getFileToJson(HAPPY_PATH);
+            String newUserParams = TestUtils.getFileToJson(NEW_USER_PATH);
             JSONObject newUserParamsJson = new JSONObject(newUserParams);
             String email = newUserParamsJson.optString(EMAIL_FIELD);
             String username = newUserParamsJson.optString(USERNAME_FIELD);
             String password = newUserParamsJson.optString(PASSWORD_FIELD);
             userService.createNewUser(username, email, password);
-            String updateUserParams = TestUtils.getFileToJson("json/edge/user_with_insecure_password.json");
+            String updateUserParams = TestUtils.getFileToJson(WITH_INSECURE_PASSWORD_PATH);
             JSONObject updateUserParamsJson = new JSONObject(updateUserParams);
             String updatePassword = updateUserParamsJson.optString(PASSWORD_FIELD);
             userService.updatePassword(username, updatePassword);
@@ -125,31 +118,43 @@ public class UserServiceTest {
     @Test
     public void shouldNotUpdateUserEmail() {
         assertThatExceptionOfType(BadRequestException.class).isThrownBy(() -> {
-            String newUserParams = TestUtils.getFileToJson(HAPPY_PATH);
+            String newUserParams = TestUtils.getFileToJson(NEW_USER_PATH);
             JSONObject newUserParamsJson = new JSONObject(newUserParams);
-            String email = newUserParamsJson.optString(EMAIL_FIELD);
-            String username = newUserParamsJson.optString(USERNAME_FIELD);
-            String password = newUserParamsJson.optString(PASSWORD_FIELD);
-            userService.createNewUser(username, email, password);
-            String updateUserParams = TestUtils.getFileToJson("json/edge/user_with_malformed_email.json");
+            createNewUser(newUserParamsJson);
+            String updateUserParams = TestUtils.getFileToJson(WITH_MALFORMED_EMAIL_PATH);
             JSONObject updateUserParamsJson = new JSONObject(updateUserParams);
             String updateEmail = updateUserParamsJson.optString(EMAIL_FIELD);
+            String username = updateUserParamsJson.optString(USERNAME_FIELD);
             userService.updateEmail(username, updateEmail);
         }).withMessageContaining(ErrorMessageConstants.EMAIL_FORMAT_REQUIREMENTS);
     }
 
     @Test
+    public void shouldNotCreateUser() throws IOException, BadRequestException, JSONException, UserNotFoundException {
+        // TODO
+    }
+
+    @Test
     public void shouldReturnUserByUsername() throws IOException, BadRequestException, JSONException, UserNotFoundException {
-        String newUserParams = TestUtils.getFileToJson(HAPPY_PATH);
+        String newUserParams = TestUtils.getFileToJson(NEW_USER_PATH);
         JSONObject newUserParamsJson = new JSONObject(newUserParams);
-        String email = newUserParamsJson.optString(EMAIL_FIELD);
-        String username = newUserParamsJson.optString(USERNAME_FIELD);
-        String password = newUserParamsJson.optString(PASSWORD_FIELD);
-        userService.createNewUser(username, email, password);
-        User foundUser = userService.getUserByUsername(username);
+        User newUserFromRepository = createAndFindNewUser(newUserParamsJson);
         User userFromUpdateRequest = objectMapper.readValue(newUserParams, User.class);
-        assertThat(userFromUpdateRequest.getEmail()).isEqualTo(foundUser.getEmail());
-        assertThat(userFromUpdateRequest.getFirstName()).isEqualTo(foundUser.getFirstName());
-        assertThat(userFromUpdateRequest.getLastName()).isEqualTo(foundUser.getLastName());
+        assertThat(userFromUpdateRequest.getEmail()).isEqualTo(newUserFromRepository.getEmail());
+        assertThat(userFromUpdateRequest.getFirstName()).isEqualTo(newUserFromRepository.getFirstName());
+        assertThat(userFromUpdateRequest.getLastName()).isEqualTo(newUserFromRepository.getLastName());
+    }
+
+    private void createNewUser(JSONObject params) throws JSONException, BadRequestException, UserNotFoundException {
+        String email = params.optString(EMAIL_FIELD);
+        String username = params.optString(USERNAME_FIELD);
+        String password = params.optString(PASSWORD_FIELD);
+        userService.createNewUser(username, email, password);
+    }
+
+    private User createAndFindNewUser(JSONObject params) throws JSONException, BadRequestException, UserNotFoundException {
+        createNewUser(params);
+        String username = params.optString(USERNAME_FIELD);
+        return userService.getUserByUsername(username);
     }
 }
