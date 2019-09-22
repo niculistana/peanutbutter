@@ -25,4 +25,6 @@ public interface IUserService extends UserDetailsService {
     void updateUserInfo(String username, NameParams nameParams) throws UserNotFoundException;
 
     void updateUserInfo(String username, AddressParams addressParams) throws UserNotFoundException;
+
+    void updateUserInfo(String username, NameParams nameParams, AddressParams addressParams) throws UserNotFoundException;
 }

@@ -6,6 +6,7 @@ import com.somamission.peanutbutter.domain.User;
 import com.somamission.peanutbutter.exception.BadRequestException;
 import com.somamission.peanutbutter.exception.UserNotFoundException;
 import com.somamission.peanutbutter.intf.IUserService;
+import com.somamission.peanutbutter.param.AddressParams;
 import com.somamission.peanutbutter.param.NameParams;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -102,10 +103,11 @@ public class UserServiceTest {
 
     @Test
     @DisplayName("Should update an existing user's first name and last name")
-    public void shouldUpdateUserInfoNames() throws IOException, BadRequestException, JSONException, UserNotFoundException {
+    public void shouldUpdateUserInfo() throws IOException, BadRequestException, JSONException, UserNotFoundException {
         String existingUserParams = TestUtils.getFileToJson(WITH_NEW_INFO_PATH);
         JSONObject existingUserParamsJson = new JSONObject(existingUserParams);
         String username = existingUserParamsJson.optString("username");
+        // Update names
         JSONObject nameParamsJson = existingUserParamsJson.optJSONObject("nameParams");
         String firstName = nameParamsJson.optString("firstName");
         String lastName = nameParamsJson.optString("lastName");
@@ -114,6 +116,24 @@ public class UserServiceTest {
         User updatedUser = userService.getUserByUsername(username);
         assertThat(updatedUser.getFirstName().equals(firstName)).isTrue();
         assertThat(updatedUser.getLastName().equals(lastName)).isTrue();
+        JSONObject addressParamsJson = existingUserParamsJson.optJSONObject("addressParams");
+        String addressLineOne = addressParamsJson.optString("addressLineOne");
+        String addressLineTwo = addressParamsJson.optString("lastName");
+        String city = addressParamsJson.optString("city");
+        String state = addressParamsJson.optString("state");
+        String zip = addressParamsJson.optString("zip");
+        String country = addressParamsJson.optString("country");
+        // Update address
+        AddressParams addressParams = new AddressParams.Builder()
+                .withAddressLineOne(addressLineOne)
+                .withAddressLineTwo(addressLineTwo)
+                .withCity(city).withState(state)
+                .withZip(zip)
+                .withCountry(country)
+                .build();
+        userService.updateUserInfo(username, addressParams);
+        updatedUser = userService.getUserByUsername(username);
+        assertThat(updatedUser.getFullAddress().equals(addressParams.getFullAddress())).isTrue();
     }
 
     @Test
