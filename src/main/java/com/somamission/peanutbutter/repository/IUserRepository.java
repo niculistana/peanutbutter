@@ -8,7 +8,5 @@ import java.util.Optional;
 
 @Repository
 public interface IUserRepository extends CrudRepository<User, Long> {
-    Iterable<User> findByFirstName(String firstName);
-    Iterable<User> findByLastName(String lastName);
     Optional<User> findByUsername(String username);
 }

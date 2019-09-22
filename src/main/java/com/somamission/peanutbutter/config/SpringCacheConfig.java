@@ -20,20 +20,20 @@ import java.util.Map;
 @EnableCaching
 public class SpringCacheConfig {
 
-    @Autowired
-    private Environment env;
+  @Autowired private Environment env;
 
-    @Bean
-    public RedissonClient redissonClient() {
-        Config config = new Config();
-        config.useSingleServer().setAddress(env.getProperty("REDIS_URL"));
-        return Redisson.create(config);
-    }
+  @Bean
+  public RedissonClient redissonClient() {
+    Config config = new Config();
+    config.useSingleServer().setAddress(env.getProperty("REDIS_URL"));
+    return Redisson.create(config);
+  }
 
-    @Bean
-    CacheManager redisCacheManager(RedissonClient redissonClient) {
-        Map<String, CacheConfig> config = new HashMap<>();
-        config.put("users", new CacheConfig(CacheConstants.USERS_TTL, CacheConstants.USERS_MAX_IDLE_TIME));
-        return new RedissonSpringCacheManager(redissonClient, config);
-    }
+  @Bean
+  CacheManager redisCacheManager(RedissonClient redissonClient) {
+    Map<String, CacheConfig> config = new HashMap<>();
+    config.put(
+        "users", new CacheConfig(CacheConstants.USERS_TTL, CacheConstants.USERS_MAX_IDLE_TIME));
+    return new RedissonSpringCacheManager(redissonClient, config);
+  }
 }
