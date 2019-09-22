@@ -6,11 +6,11 @@ import org.springframework.boot.builder.SpringApplicationBuilder;
 
 @SpringBootApplication
 public class PeanutButterApplication {
-    protected SpringApplicationBuilder configure(SpringApplicationBuilder application) {
-        return application.sources(PeanutButterApplication.class);
-    }
+  protected SpringApplicationBuilder configure(SpringApplicationBuilder application) {
+    return application.sources(PeanutButterApplication.class);
+  }
 
-    public static void main(String[] args) {
-        SpringApplication.run(PeanutButterApplication.class, args);
-    }
+  public static void main(String[] args) {
+    SpringApplication.run(PeanutButterApplication.class, args);
+  }
 }

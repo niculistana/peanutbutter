@@ -10,19 +10,19 @@ import java.io.Serializable;
 @Data
 public class ReservedWord implements Serializable {
 
-    private static final long serialVersionUID = 1L;
+  private static final long serialVersionUID = 1L;
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
-    @Column(name = "reserved_word_id")
-    private Integer wordId;
+  @Id
+  @GeneratedValue(strategy = GenerationType.AUTO)
+  @Column(name = "reserved_word_id")
+  private Integer wordId;
 
-    @Column(name = "reserved_word")
-    private String word;
+  @Column(name = "reserved_word")
+  private String word;
 
-    @Column(name = "is_admin")
-    private String isAdmin;
+  @Column(name = "is_admin")
+  private String isAdmin;
 
-    @Column(name = "is_abusive")
-    private String isAbusive;
+  @Column(name = "is_abusive")
+  private String isAbusive;
 }

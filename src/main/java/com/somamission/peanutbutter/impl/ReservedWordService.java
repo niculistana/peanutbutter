@@ -12,17 +12,16 @@ import java.util.List;
 @Service
 public class ReservedWordService implements IReservedWordService {
 
-    @Autowired
-    IReservedWordRepository reservedWordRepository;
+  @Autowired IReservedWordRepository reservedWordRepository;
 
-    @Override
-    public List<ReservedWord> getAllReservedWords() {
-        List<ReservedWord> reservedWords = new ArrayList<>();
+  @Override
+  public List<ReservedWord> getAllReservedWords() {
+    List<ReservedWord> reservedWords = new ArrayList<>();
 
-        for (ReservedWord reservedWord : reservedWordRepository.findAll()) {
-            reservedWords.add(reservedWord);
-        }
-
-        return reservedWords;
+    for (ReservedWord reservedWord : reservedWordRepository.findAll()) {
+      reservedWords.add(reservedWord);
     }
+
+    return reservedWords;
+  }
 }

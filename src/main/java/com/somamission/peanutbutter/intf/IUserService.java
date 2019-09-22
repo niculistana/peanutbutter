@@ -8,23 +8,21 @@ import com.somamission.peanutbutter.param.NameParams;
 import org.springframework.security.core.userdetails.UserDetailsService;
 
 public interface IUserService extends UserDetailsService {
-    User getUserByUsername(String username) throws UserNotFoundException;
+  User getUserByUsername(String username) throws UserNotFoundException;
 
-    void createNewUser(String username,
-                       String email,
-                       String password) throws BadRequestException;
+  void createNewUser(String username, String email, String password) throws BadRequestException;
 
-    void updatePassword(String username,
-                        String password) throws BadRequestException, UserNotFoundException;
+  void updatePassword(String username, String password)
+      throws BadRequestException, UserNotFoundException;
 
-    void resetPassword(String username) throws UserNotFoundException, BadRequestException;
+  void resetPassword(String username) throws UserNotFoundException, BadRequestException;
 
-    void updateEmail(String username,
-                     String email) throws BadRequestException, UserNotFoundException;
+  void updateEmail(String username, String email) throws BadRequestException, UserNotFoundException;
 
-    void updateUserInfo(String username, NameParams nameParams) throws UserNotFoundException;
+  void updateUserInfo(String username, NameParams nameParams) throws UserNotFoundException;
 
-    void updateUserInfo(String username, AddressParams addressParams) throws UserNotFoundException;
+  void updateUserInfo(String username, AddressParams addressParams) throws UserNotFoundException;
 
-    void updateUserInfo(String username, NameParams nameParams, AddressParams addressParams) throws UserNotFoundException;
+  void updateUserInfo(String username, NameParams nameParams, AddressParams addressParams)
+      throws UserNotFoundException;
 }
