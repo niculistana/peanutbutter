@@ -8,6 +8,8 @@ import com.somamission.peanutbutter.exception.ObjectNotFoundException;
 import com.somamission.peanutbutter.exception.UserNotFoundException;
 import com.somamission.peanutbutter.intf.IReservedWordService;
 import com.somamission.peanutbutter.intf.IUserService;
+import com.somamission.peanutbutter.param.AddressParams;
+import com.somamission.peanutbutter.param.NameParams;
 import com.somamission.peanutbutter.param.UserParams;
 import com.somamission.peanutbutter.repository.IUserRepository;
 import org.apache.commons.lang3.StringUtils;
@@ -156,6 +158,18 @@ public class UserService implements IUserService {
 
         UserParams userParams = new UserParams.Builder().withUsername(username).withEmail(email).build();
         updateUser(userParams);
+    }
+
+    @Override
+    public void updateUserInfo(String username, NameParams nameParams) throws UserNotFoundException {
+        UserParams userParams = new UserParams.Builder().withUsername(username).withNameParams(nameParams).build();
+        this.updateUser(userParams);
+    }
+
+    @Override
+    public void updateUserInfo(String username, AddressParams addressParams) throws UserNotFoundException {
+        UserParams userParams = new UserParams.Builder().withUsername(username).withAddressParams(addressParams).build();
+        this.updateUser(userParams);
     }
 
     private void updateUser(UserParams userParams) throws UserNotFoundException {
