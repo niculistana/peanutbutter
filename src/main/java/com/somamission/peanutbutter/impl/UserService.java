@@ -10,10 +10,10 @@ import com.somamission.peanutbutter.intf.IReservedWordService;
 import com.somamission.peanutbutter.intf.IUserService;
 import com.somamission.peanutbutter.param.AddressParams;
 import com.somamission.peanutbutter.param.NameParams;
+import com.somamission.peanutbutter.param.PhotoParams;
 import com.somamission.peanutbutter.param.UserParams;
 import com.somamission.peanutbutter.repository.IUserRepository;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.validator.routines.EmailValidator;
 import org.passay.*;
 import org.redisson.api.RMapCache;
 import org.redisson.api.RedissonClient;
@@ -27,8 +27,11 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import javax.validation.ConstraintViolation;
+import javax.validation.Validator;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -51,6 +54,8 @@ public class UserService implements IUserService {
   @Autowired private RedissonClient redissonClient;
 
   @Autowired private CacheManager cacheManager;
+
+  @Autowired private Validator validator;
 
   @Override
   @Cacheable(cacheNames = "users", key = "#username")
@@ -91,15 +96,6 @@ public class UserService implements IUserService {
       throw new BadRequestException(PASSWORD_INVALID_MSG);
     }
 
-    if (!isEmailValid(email)) {
-      String emailNotValidMessage =
-          email
-              + " email is invalid. Requirements: "
-              + ErrorMessageConstants.EMAIL_FORMAT_REQUIREMENTS;
-      logger.info(emailNotValidMessage);
-      throw new BadRequestException(emailNotValidMessage);
-    }
-
     if (!isUsernameValid(username)) {
       String usernameNotValidMessage =
           username
@@ -121,6 +117,12 @@ public class UserService implements IUserService {
     user.setEmail(email);
     user.setUsername(username);
     user.setPassword(passwordEncoder.encode(password));
+
+    Set<ConstraintViolation<User>> errors = validator.validate(user);
+    if (!errors.isEmpty()) {
+      handleValidationErrors(errors);
+    }
+
     userRepository.save(user);
     updateUsersCacheForUsername(username, user);
   }
@@ -162,48 +164,50 @@ public class UserService implements IUserService {
       throw new BadRequestException(USERNAME_INVALID_MSG);
     }
 
-    if (!isEmailValid(email)) {
-      String emailNotValidMessage =
-          email
-              + " email is invalid. Requirements: "
-              + ErrorMessageConstants.EMAIL_FORMAT_REQUIREMENTS;
-      logger.info(emailNotValidMessage);
-      throw new BadRequestException(emailNotValidMessage);
-    }
-
     UserParams userParams =
         new UserParams.Builder().withUsername(username).withEmail(email).build();
     updateUser(userParams);
   }
 
   @Override
-  public void updateUserInfo(String username, NameParams nameParams) throws UserNotFoundException {
+  public void updateUserInfo(String username, NameParams nameParams)
+      throws UserNotFoundException, BadRequestException {
     UserParams userParams =
         new UserParams.Builder().withUsername(username).withNameParams(nameParams).build();
     this.updateUser(userParams);
   }
 
   @Override
+  public void updateUserInfo(String username, PhotoParams photoParams)
+      throws BadRequestException, UserNotFoundException {
+    UserParams userParams =
+        new UserParams.Builder().withUsername(username).withPhotoParams(photoParams).build();
+    this.updateUser(userParams);
+  }
+
+  @Override
   public void updateUserInfo(String username, AddressParams addressParams)
-      throws UserNotFoundException {
+      throws UserNotFoundException, BadRequestException {
     UserParams userParams =
         new UserParams.Builder().withUsername(username).withAddressParams(addressParams).build();
     this.updateUser(userParams);
   }
 
   @Override
-  public void updateUserInfo(String username, NameParams nameParams, AddressParams addressParams)
-      throws UserNotFoundException {
+  public void updateUserInfo(
+      String username, NameParams nameParams, PhotoParams photoParams, AddressParams addressParams)
+      throws UserNotFoundException, BadRequestException {
     UserParams userParams =
         new UserParams.Builder()
             .withUsername(username)
             .withNameParams(nameParams)
+            .withPhotoParams(photoParams)
             .withAddressParams(addressParams)
             .build();
     this.updateUser(userParams);
   }
 
-  private void updateUser(UserParams userParams) throws UserNotFoundException {
+  private void updateUser(UserParams userParams) throws UserNotFoundException, BadRequestException {
     String username = userParams.getUsername();
     User user = null;
     try {
@@ -211,6 +215,7 @@ public class UserService implements IUserService {
     } catch (ObjectNotFoundException e) {
       throw new UserNotFoundException(username);
     }
+
     if (!StringUtils.isEmpty(userParams.getEmail())) {
       user.setEmail(StringUtils.trim(userParams.getEmail()));
     }
@@ -220,12 +225,24 @@ public class UserService implements IUserService {
     }
 
     if (null != userParams.getNameParams()) {
-      if (!StringUtils.isEmpty(userParams.getNameParams().getFirstName())) {
-        user.setFirstName(StringUtils.trim(userParams.getNameParams().getFirstName()));
+      NameParams nameParams = userParams.getNameParams();
+      if (!StringUtils.isEmpty(nameParams.getFirstName())) {
+        user.setFirstName(StringUtils.trim(nameParams.getFirstName()));
       }
 
-      if (!StringUtils.isEmpty(userParams.getNameParams().getLastName())) {
-        user.setLastName(StringUtils.trim(userParams.getNameParams().getLastName()));
+      if (!StringUtils.isEmpty(nameParams.getLastName())) {
+        user.setLastName(StringUtils.trim(nameParams.getLastName()));
+      }
+    }
+
+    if (null != userParams.getPhotoParams()) {
+      PhotoParams photoParams = userParams.getPhotoParams();
+      if (!StringUtils.isEmpty(photoParams.getProfileUrl())) {
+        user.setProfilePhotoUrl(photoParams.getProfileUrl());
+      }
+
+      if (!StringUtils.isEmpty(photoParams.getCoverUrl())) {
+        user.setCoverPhotoUrl(photoParams.getCoverUrl());
       }
     }
 
@@ -233,26 +250,29 @@ public class UserService implements IUserService {
         && !StringUtils.isEmpty(userParams.getAddressParams().getFullAddress())) {
       user.setFullAddress(StringUtils.trim(userParams.getAddressParams().getFullAddress()));
     }
+
+    Set<ConstraintViolation<User>> errors = validator.validate(user);
+    if (!errors.isEmpty()) {
+      handleValidationErrors(errors);
+    }
+
     userRepository.save(user);
     updateUsersCacheForUsername(username, user);
   }
 
-  private boolean isEmailValid(String email) {
-    return EmailValidator.getInstance().isValid(email);
-  }
-
+  // can this be part of hibernate validator?
   private boolean isUsernameValid(String username) {
     List<String> reservedWords =
         reservedWordService.getAllReservedWords().stream()
             .map(ReservedWord::getWord)
             .collect(Collectors.toList());
-    if (username.length() < 3) return false;
     return !reservedWords.contains(username);
   }
 
+  // can this be part of hibernate validator?
   private boolean isPasswordValid(String password) {
     // should we have a special character rule?
-    PasswordValidator validator =
+    PasswordValidator passwordValidator =
         new PasswordValidator(
             new LengthRule(8, 128),
             new CharacterRule(EnglishCharacterData.UpperCase, 1),
@@ -260,7 +280,7 @@ public class UserService implements IUserService {
             new CharacterRule(EnglishCharacterData.Digit, 1),
             new WhitespaceRule());
 
-    RuleResult result = validator.validate(new PasswordData(password));
+    RuleResult result = passwordValidator.validate(new PasswordData(password));
     return result.isValid();
   }
 
@@ -274,6 +294,14 @@ public class UserService implements IUserService {
 
     PasswordGenerator generator = new PasswordGenerator();
     return generator.generatePassword(12, rules);
+  }
+
+  private void handleValidationErrors(Set<ConstraintViolation<User>> errors)
+      throws BadRequestException {
+    String errorMessage =
+        StringUtils.join(errors.stream().map(ConstraintViolation::getMessage).toArray(), "\n");
+    logger.info(errorMessage);
+    throw new BadRequestException(errorMessage);
   }
 
   @CachePut(cacheNames = "users", key = "#username")

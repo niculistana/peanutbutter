@@ -6,6 +6,7 @@ public class UserParams {
     private String username;
     private String password;
     private NameParams nameParams;
+    private PhotoParams photoParams;
     private AddressParams addressParams;
 
     public Builder withEmail(String email) {
@@ -28,6 +29,11 @@ public class UserParams {
       return this;
     }
 
+    public Builder withPhotoParams(PhotoParams photoParams) {
+      this.photoParams = photoParams;
+      return this;
+    }
+
     public Builder withAddressParams(AddressParams addressParams) {
       this.addressParams = addressParams;
       return this;
@@ -39,6 +45,7 @@ public class UserParams {
       userParams.username = this.username;
       userParams.password = this.password;
       userParams.nameParams = this.nameParams;
+      userParams.photoParams = this.photoParams;
       userParams.addressParams = this.addressParams;
       return userParams;
     }
@@ -48,6 +55,7 @@ public class UserParams {
   private String password;
   private String username;
   private NameParams nameParams;
+  private PhotoParams photoParams;
   private AddressParams addressParams;
 
   private UserParams() {}
@@ -66,6 +74,10 @@ public class UserParams {
 
   public NameParams getNameParams() {
     return nameParams;
+  }
+
+  public PhotoParams getPhotoParams() {
+    return photoParams;
   }
 
   public AddressParams getAddressParams() {

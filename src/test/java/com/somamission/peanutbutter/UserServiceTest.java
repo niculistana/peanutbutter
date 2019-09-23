@@ -8,6 +8,7 @@ import com.somamission.peanutbutter.exception.UserNotFoundException;
 import com.somamission.peanutbutter.intf.IUserService;
 import com.somamission.peanutbutter.param.AddressParams;
 import com.somamission.peanutbutter.param.NameParams;
+import com.somamission.peanutbutter.param.PhotoParams;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.junit.jupiter.api.BeforeEach;
@@ -43,6 +44,8 @@ public class UserServiceTest {
       "json/edge/user_with_insecure_password.json";
   private static final String WITH_MALFORMED_EMAIL_PATH =
       "json/edge/user_with_malformed_email.json";
+  private static final String WITH_MALFORMED_PROFILE_URL_PATH =
+      "json/edge/user_with_malformed_profile_url.json";
   private static final String WITH_INVALID_USERNAME = "json/edge/user_with_invalid_username.json";
   private static final String EMAIL_FIELD = "email";
   private static final String USERNAME_FIELD = "username";
@@ -113,7 +116,7 @@ public class UserServiceTest {
       throws IOException, BadRequestException, JSONException, UserNotFoundException {
     String existingUserParams = TestUtils.getFileToJson(WITH_NEW_INFO_PATH);
     JSONObject existingUserParamsJson = new JSONObject(existingUserParams);
-    String username = existingUserParamsJson.optString("username");
+    String username = existingUserParamsJson.optString(USERNAME_FIELD);
     // Update names
     JSONObject nameParamsJson = existingUserParamsJson.optJSONObject("nameParams");
     String firstName = nameParamsJson.optString("firstName");
@@ -124,6 +127,16 @@ public class UserServiceTest {
     User updatedUser = userService.getUserByUsername(username);
     assertThat(updatedUser.getFirstName().equals(firstName)).isTrue();
     assertThat(updatedUser.getLastName().equals(lastName)).isTrue();
+    JSONObject photoParamsJson = existingUserParamsJson.optJSONObject("photoParams");
+    String profileUrl = photoParamsJson.optString("profileUrl");
+    String coverUrl = photoParamsJson.optString("coverUrl");
+    PhotoParams photoParams =
+        new PhotoParams.Builder().withProfileUrl(profileUrl).withCoverUrl(coverUrl).build();
+    // Update photos
+    userService.updateUserInfo(username, photoParams);
+    updatedUser = userService.getUserByUsername(username);
+    assertThat(updatedUser.getProfilePhotoUrl().equals(photoParams.getProfileUrl())).isTrue();
+    assertThat(updatedUser.getCoverPhotoUrl().equals(photoParams.getCoverUrl())).isTrue();
     JSONObject addressParamsJson = existingUserParamsJson.optJSONObject("addressParams");
     String addressLineOne = addressParamsJson.optString("addressLineOne");
     String addressLineTwo = addressParamsJson.optString("lastName");
@@ -178,9 +191,27 @@ public class UserServiceTest {
   }
 
   @Test
+  @DisplayName(
+      "Should not update an existing user's profile photo if url is not correctly formatted")
+  public void shouldNotUpdateUserProfilePhotoUrl() {
+    assertThatExceptionOfType(BadRequestException.class)
+        .isThrownBy(
+            () -> {
+              String existingUserParams = TestUtils.getFileToJson(WITH_MALFORMED_PROFILE_URL_PATH);
+              JSONObject existingUserParamsJson = new JSONObject(existingUserParams);
+              String username = existingUserParamsJson.optString(USERNAME_FIELD);
+              JSONObject photoParamsJson = existingUserParamsJson.optJSONObject("photoParams");
+              String profileUrl = photoParamsJson.optString("profileUrl");
+              PhotoParams photoParams =
+                  new PhotoParams.Builder().withProfileUrl(profileUrl).build();
+              userService.updateUserInfo(username, photoParams);
+            })
+        .withMessageContaining(ErrorMessageConstants.URL_FORMAT_REQUIREMENTS);
+  }
+
+  @Test
   @DisplayName("Should not update an existing user's password if the username is invalid")
-  public void shouldNotCreateUser()
-      throws IOException, BadRequestException, JSONException, UserNotFoundException {
+  public void shouldNotCreateUser() {
     assertThatExceptionOfType(BadRequestException.class)
         .isThrownBy(
             () -> {
@@ -190,8 +221,7 @@ public class UserServiceTest {
               String username = params.optString(USERNAME_FIELD);
               String password = params.optString(PASSWORD_FIELD);
               userService.createNewUser(username, email, password);
-            })
-        .withMessageContaining(ErrorMessageConstants.USERNAME_FORMAT_REQUIREMENTS);
+            });
   }
 
   @Test
