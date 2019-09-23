@@ -4,9 +4,13 @@
     "firstName": "Foo",
     "lastName": "Bar"
   },
+  "photoParams": {
+    "profileUrl": "http://placeimg.com/100/100/people",
+    "coverUrl": "http://placeimg.com/820/312/nature"
+  },
   "addressParams": {
     "addressLineOne": "123 Main St.",
-    "addressLineTwo": "",
+    "addressLineTwo": "#123",
     "city": "New York",
     "state": "NY",
     "zip": 10001,

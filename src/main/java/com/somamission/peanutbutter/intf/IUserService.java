@@ -5,6 +5,7 @@ import com.somamission.peanutbutter.exception.BadRequestException;
 import com.somamission.peanutbutter.exception.UserNotFoundException;
 import com.somamission.peanutbutter.param.AddressParams;
 import com.somamission.peanutbutter.param.NameParams;
+import com.somamission.peanutbutter.param.PhotoParams;
 import org.springframework.security.core.userdetails.UserDetailsService;
 
 public interface IUserService extends UserDetailsService {
@@ -19,10 +20,16 @@ public interface IUserService extends UserDetailsService {
 
   void updateEmail(String username, String email) throws BadRequestException, UserNotFoundException;
 
-  void updateUserInfo(String username, NameParams nameParams) throws UserNotFoundException;
+  void updateUserInfo(String username, NameParams nameParams)
+      throws UserNotFoundException, BadRequestException;
 
-  void updateUserInfo(String username, AddressParams addressParams) throws UserNotFoundException;
+  void updateUserInfo(String username, PhotoParams photoParams)
+      throws BadRequestException, UserNotFoundException;
 
-  void updateUserInfo(String username, NameParams nameParams, AddressParams addressParams)
-      throws UserNotFoundException;
+  void updateUserInfo(String username, AddressParams addressParams)
+      throws UserNotFoundException, BadRequestException;
+
+  void updateUserInfo(
+      String username, NameParams nameParams, PhotoParams photoParams, AddressParams addressParams)
+      throws UserNotFoundException, BadRequestException;
 }

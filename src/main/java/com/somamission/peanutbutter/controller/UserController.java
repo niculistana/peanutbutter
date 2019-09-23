@@ -2,15 +2,14 @@ package com.somamission.peanutbutter.controller;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.somamission.peanutbutter.constants.ErrorMessageConstants;
 import com.somamission.peanutbutter.domain.User;
 import com.somamission.peanutbutter.exception.BadRequestException;
 import com.somamission.peanutbutter.exception.UserNotFoundException;
 import com.somamission.peanutbutter.intf.IUserService;
 import com.somamission.peanutbutter.param.AddressParams;
 import com.somamission.peanutbutter.param.NameParams;
+import com.somamission.peanutbutter.param.PhotoParams;
 import com.somamission.peanutbutter.param.UserParams;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -34,9 +33,6 @@ public class UserController {
     String username = userParams.getUsername();
     String email = userParams.getEmail();
     String password = userParams.getPassword();
-    if (StringUtils.isEmpty(email) || StringUtils.isEmpty(password)) {
-      throw new BadRequestException(ErrorMessageConstants.REQUIRED_PARAMETER_NOT_FOUND);
-    }
     userService.createNewUser(username, email, password);
     User user = userService.getUserByUsername(username);
     if (null == user) throw new UserNotFoundException(username);
@@ -48,9 +44,6 @@ public class UserController {
       throws UserNotFoundException, BadRequestException, JsonProcessingException {
     String username = userParams.getUsername();
     String password = userParams.getPassword();
-    if (StringUtils.isEmpty(password)) {
-      throw new BadRequestException(ErrorMessageConstants.REQUIRED_PARAMETER_NOT_FOUND);
-    }
     userService.updatePassword(username, password);
     User user = userService.getUserByUsername(username);
     if (null == user) throw new UserNotFoundException(username);
@@ -72,9 +65,6 @@ public class UserController {
       throws UserNotFoundException, BadRequestException, JsonProcessingException {
     String username = userParams.getUsername();
     String email = userParams.getEmail();
-    if (StringUtils.isEmpty(email)) {
-      throw new BadRequestException(ErrorMessageConstants.REQUIRED_PARAMETER_NOT_FOUND);
-    }
     userService.updateEmail(username, email);
     User user = userService.getUserByUsername(username);
     if (null == user) throw new UserNotFoundException(username);
@@ -84,13 +74,16 @@ public class UserController {
   @PutMapping("/user/{username}/updateInfo")
   public ResponseEntity<String> updateUserInfo(
       @PathVariable String username, @RequestBody UserParams userParams)
-      throws UserNotFoundException, BadRequestException, JsonProcessingException {
+      throws UserNotFoundException, JsonProcessingException, BadRequestException {
     NameParams nameParams = userParams.getNameParams();
+    PhotoParams photoParams = userParams.getPhotoParams();
     AddressParams addressParams = userParams.getAddressParams();
-    if (null != nameParams && null != addressParams) {
-      userService.updateUserInfo(username, nameParams, addressParams);
+    if (null != nameParams && null != photoParams && null != addressParams) {
+      userService.updateUserInfo(username, nameParams, photoParams, addressParams);
     } else if (null != nameParams) {
       userService.updateUserInfo(username, nameParams);
+    } else if (null != photoParams) {
+      userService.updateUserInfo(username, photoParams);
     } else {
       userService.updateUserInfo(username, addressParams);
     }

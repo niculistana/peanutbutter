@@ -88,6 +88,6 @@ public class AddressParams {
     String[] fullAddressFields = {
       this.addressLineOne, this.addressLineTwo, this.city, this.state, this.country, this.zip
     };
-    return StringUtils.join(fullAddressFields, ",");
+    return StringUtils.join(fullAddressFields, ' ');
   }
 }
