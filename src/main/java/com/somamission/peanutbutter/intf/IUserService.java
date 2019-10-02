@@ -2,6 +2,7 @@ package com.somamission.peanutbutter.intf;
 
 import com.somamission.peanutbutter.domain.User;
 import com.somamission.peanutbutter.exception.BadRequestException;
+import com.somamission.peanutbutter.exception.UserFoundException;
 import com.somamission.peanutbutter.exception.UserNotFoundException;
 import com.somamission.peanutbutter.param.AddressParams;
 import com.somamission.peanutbutter.param.NameParams;
@@ -11,7 +12,8 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 public interface IUserService extends UserDetailsService {
   User getUserByUsername(String username) throws UserNotFoundException;
 
-  void createNewUser(String username, String email, String password) throws BadRequestException;
+  void createNewUser(String username, String email, String password)
+      throws BadRequestException, UserFoundException;
 
   void updatePassword(String username, String password)
       throws BadRequestException, UserNotFoundException;

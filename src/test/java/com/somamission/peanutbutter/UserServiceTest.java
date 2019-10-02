@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.somamission.peanutbutter.constants.ErrorMessageConstants;
 import com.somamission.peanutbutter.domain.User;
 import com.somamission.peanutbutter.exception.BadRequestException;
+import com.somamission.peanutbutter.exception.UserFoundException;
 import com.somamission.peanutbutter.exception.UserNotFoundException;
 import com.somamission.peanutbutter.intf.IUserService;
 import com.somamission.peanutbutter.param.AddressParams;
@@ -52,14 +53,13 @@ public class UserServiceTest {
   private static final String PASSWORD_FIELD = "password";
 
   @BeforeEach
-  void initEach() throws UserNotFoundException, BadRequestException, JSONException {
+  void initEach() throws BadRequestException, JSONException, UserFoundException {
     createNewUser();
   }
 
   @Test
   @DisplayName("Should create a user")
-  public void shouldCreateAUser()
-      throws IOException, BadRequestException, JSONException, UserNotFoundException {
+  public void shouldCreateAUser() throws IOException, JSONException, UserNotFoundException {
     String newUserParams = TestUtils.getFileToJson(NEW_USER_PATH);
     User newUserFromRepository = findNewUser();
     User userFromCreateRequest = objectMapper.readValue(newUserParams, User.class);
@@ -113,7 +113,7 @@ public class UserServiceTest {
   @Test
   @DisplayName("Should update an existing user's first name and last name")
   public void shouldUpdateUserInfo()
-      throws IOException, BadRequestException, JSONException, UserNotFoundException {
+      throws BadRequestException, JSONException, UserNotFoundException {
     String existingUserParams = TestUtils.getFileToJson(WITH_NEW_INFO_PATH);
     JSONObject existingUserParamsJson = new JSONObject(existingUserParams);
     String username = existingUserParamsJson.optString(USERNAME_FIELD);
@@ -226,8 +226,7 @@ public class UserServiceTest {
 
   @Test
   @DisplayName("Should get an existing user by username")
-  public void shouldGetUserByUsername()
-      throws IOException, BadRequestException, JSONException, UserNotFoundException {
+  public void shouldGetUserByUsername() throws IOException, JSONException, UserNotFoundException {
     String newUserParams = TestUtils.getFileToJson(NEW_USER_PATH);
     User newUserFromRepository = findNewUser();
     User userFromUpdateRequest = objectMapper.readValue(newUserParams, User.class);
@@ -238,7 +237,7 @@ public class UserServiceTest {
   }
 
   /** Creates a new user using correct params */
-  private void createNewUser() throws JSONException, BadRequestException, UserNotFoundException {
+  private void createNewUser() throws JSONException, BadRequestException, UserFoundException {
     String newUserParams = TestUtils.getFileToJson(NEW_USER_PATH);
     JSONObject params = new JSONObject(newUserParams);
     String email = params.optString(EMAIL_FIELD);
@@ -252,7 +251,7 @@ public class UserServiceTest {
    *
    * @return the user found
    */
-  private User findNewUser() throws JSONException, BadRequestException, UserNotFoundException {
+  private User findNewUser() throws JSONException, UserNotFoundException {
     String newUserParams = TestUtils.getFileToJson(NEW_USER_PATH);
     JSONObject params = new JSONObject(newUserParams);
     String username = params.optString(USERNAME_FIELD);

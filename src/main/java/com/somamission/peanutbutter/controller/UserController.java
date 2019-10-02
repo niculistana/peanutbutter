@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.somamission.peanutbutter.domain.User;
 import com.somamission.peanutbutter.exception.BadRequestException;
+import com.somamission.peanutbutter.exception.UserFoundException;
 import com.somamission.peanutbutter.exception.UserNotFoundException;
 import com.somamission.peanutbutter.intf.IUserService;
 import com.somamission.peanutbutter.param.AddressParams;
@@ -29,7 +30,8 @@ public class UserController {
 
   @PostMapping("/user/create")
   public ResponseEntity<String> createUser(@RequestBody UserParams userParams)
-      throws UserNotFoundException, BadRequestException, JsonProcessingException {
+      throws UserNotFoundException, BadRequestException, JsonProcessingException,
+          UserFoundException {
     String username = userParams.getUsername();
     String email = userParams.getEmail();
     String password = userParams.getPassword();
@@ -40,9 +42,9 @@ public class UserController {
   }
 
   @PutMapping("/user/{username}/updatePassword")
-  public ResponseEntity<String> updatePassword(@RequestBody UserParams userParams)
+  public ResponseEntity<String> updatePassword(
+      @PathVariable String username, @RequestBody UserParams userParams)
       throws UserNotFoundException, BadRequestException, JsonProcessingException {
-    String username = userParams.getUsername();
     String password = userParams.getPassword();
     userService.updatePassword(username, password);
     User user = userService.getUserByUsername(username);
@@ -51,9 +53,8 @@ public class UserController {
   }
 
   @PutMapping("/user/{username}/resetPassword")
-  public ResponseEntity<String> resetPassword(@RequestBody UserParams userParams)
+  public ResponseEntity<String> resetPassword(@PathVariable String username)
       throws UserNotFoundException, BadRequestException, JsonProcessingException {
-    String username = userParams.getUsername();
     userService.resetPassword(username);
     User user = userService.getUserByUsername(username);
     if (null == user) throw new UserNotFoundException(username);
@@ -61,9 +62,9 @@ public class UserController {
   }
 
   @PutMapping("/user/{username}/updateEmail")
-  public ResponseEntity<String> updateEmail(@RequestBody UserParams userParams)
+  public ResponseEntity<String> updateEmail(
+      @PathVariable String username, @RequestBody UserParams userParams)
       throws UserNotFoundException, BadRequestException, JsonProcessingException {
-    String username = userParams.getUsername();
     String email = userParams.getEmail();
     userService.updateEmail(username, email);
     User user = userService.getUserByUsername(username);

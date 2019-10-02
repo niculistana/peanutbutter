@@ -3,14 +3,17 @@ Authorization server based on Spring Boot
 
 ### Requirements
 ```
-install and run java 1.8, maven, redis, docker (optional)
+java 1.8, maven redis
 ```
+
 ### Usage
 ```
 mvn spring-boot:run
-# or if you are running docker
-docker-compose up --build
+open localhost:8080 
 ```
+
+### Using docker
+Please check the [Using Docker](https://github.com/niculistana/peanutbutter/wiki/Using-Docker) page.
 
 ### Development
 1. Create (or find an existing) issue via the [issue page](https://github.com/niculistana/peanutbutter/issues)

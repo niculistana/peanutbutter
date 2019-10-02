@@ -5,6 +5,7 @@ import com.somamission.peanutbutter.domain.ReservedWord;
 import com.somamission.peanutbutter.domain.User;
 import com.somamission.peanutbutter.exception.BadRequestException;
 import com.somamission.peanutbutter.exception.ObjectNotFoundException;
+import com.somamission.peanutbutter.exception.UserFoundException;
 import com.somamission.peanutbutter.exception.UserNotFoundException;
 import com.somamission.peanutbutter.intf.IReservedWordService;
 import com.somamission.peanutbutter.intf.IUserService;
@@ -43,6 +44,7 @@ public class UserService implements IUserService {
       ErrorMessageConstants.REQUIRED_PARAMETER_NOT_FOUND + ": email";
   private static final String PASSWORD_INVALID_MSG =
       ErrorMessageConstants.REQUIRED_PARAMETER_NOT_FOUND + ": password";
+  private static final String USER_ALREADY_EXISTS_MSG = "User already exists";
   private static final Logger logger = LoggerFactory.getLogger(UserService.class);
 
   @Autowired private IUserRepository userRepository;
@@ -80,8 +82,14 @@ public class UserService implements IUserService {
 
   @Override
   public void createNewUser(String username, String email, String password)
-      throws BadRequestException {
+      throws BadRequestException, UserFoundException {
     logger.info("Inserting new user");
+
+    if (userRepository.findByUsername(username).isPresent()) {
+      String conflictMessage = USER_ALREADY_EXISTS_MSG + ": " + username;
+      logger.info(conflictMessage);
+      throw new UserFoundException(conflictMessage);
+    }
 
     if (StringUtils.isEmpty(email)) {
       logger.info(EMAIL_INVALID_MSG);
@@ -105,7 +113,7 @@ public class UserService implements IUserService {
       throw new BadRequestException(usernameNotValidMessage);
     }
 
-    if (!isPasswordValid(password)) {
+    if (isPasswordValid(password)) {
       String notSecureEnoughMessage =
           "password is invalid. Requirements: "
               + ErrorMessageConstants.PASSWORD_FORMAT_REQUIREMENTS;
@@ -136,7 +144,7 @@ public class UserService implements IUserService {
       throw new BadRequestException(USERNAME_INVALID_MSG);
     }
 
-    if (!isPasswordValid(password)) {
+    if (isPasswordValid(password)) {
       String passwordIsNotSecureEnoughMessage =
           "password is invalid. Requirements: "
               + ErrorMessageConstants.PASSWORD_FORMAT_REQUIREMENTS;
@@ -209,7 +217,7 @@ public class UserService implements IUserService {
 
   private void updateUser(UserParams userParams) throws UserNotFoundException, BadRequestException {
     String username = userParams.getUsername();
-    User user = null;
+    User user;
     try {
       user = userRepository.findByUsername(username).orElseThrow(ObjectNotFoundException::new);
     } catch (ObjectNotFoundException e) {
@@ -281,7 +289,7 @@ public class UserService implements IUserService {
             new WhitespaceRule());
 
     RuleResult result = passwordValidator.validate(new PasswordData(password));
-    return result.isValid();
+    return !result.isValid();
   }
 
   private String generatePassword() {
